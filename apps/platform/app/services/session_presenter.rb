@@ -18,7 +18,7 @@ class SessionPresenter
         { id: execution.id, purpose: execution.purpose, status: execution.status,
           revision: execution.source_snapshot.revision, created_at: execution.created_at,
           result: result_for(execution, full: index.zero? || execution.id == with_output),
-          reported_test_summary: ExecutionEvidence.summary(execution) }
+          reported_test_summary: ExecutionEvidence.summary(execution, exercise: exercise) }
       } }
   end
 

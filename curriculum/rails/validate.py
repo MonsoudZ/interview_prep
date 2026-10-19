@@ -76,12 +76,13 @@ def main():
         slug = manifest.parent.name
         if args.exercise and slug not in args.exercise:
             continue
+        test_count = json.loads(manifest.read_text())["test_count"]
         for label, reference, prepare in [("prepare", False, True), ("starter", False, False), ("reference", True, False)]:
             result = run(slug, reference=reference, prepare=prepare)
             summary = re.search(r"\d+ runs, \d+ assertions, \d+ failures, \d+ errors, \d+ skips", result.stdout)
             valid = result.returncode == 0 if label != "starter" else result.returncode != 0 and bool(summary)
             if label == "reference":
-                valid = valid and bool(re.search(r"12 runs, \d+ assertions, 0 failures, 0 errors, 0 skips", result.stdout))
+                valid = valid and bool(re.search(rf"{test_count} runs, \d+ assertions, 0 failures, 0 errors, 0 skips", result.stdout))
             if not valid:
                 print(result.stdout)
                 raise RuntimeError(f"{slug}: invalid {label}")
@@ -92,7 +93,7 @@ def main():
                 result = run(slug, reference=True, mutation=mutation)
                 assert result.returncode != 0, f"Surviving mutation: {slug} {mutation}"
                 # Reject mutants caught only by load/syntax errors, rather than behavior checks.
-                summary = re.search(r"12 runs, \d+ assertions, ([1-9]\d*) failures, \d+ errors, 0 skips", result.stdout)
+                summary = re.search(rf"{test_count} runs, \d+ assertions, ([1-9]\d*) failures, \d+ errors, 0 skips", result.stdout)
                 if not summary:
                     print(result.stdout)
                     raise RuntimeError(f"Mutation did not produce a behavioral failure: {slug} {mutation}")

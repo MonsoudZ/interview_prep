@@ -3,6 +3,7 @@
   "title": "Repair Support Escalations",
   "version": 1,
   "operation": "rails.support-escalations.v1",
+  "test_count": 12,
   "duration_minutes": 55,
   "summary": "Repair an existing escalation endpoint: enforce role and tenant boundaries, valid state transitions, exact audit records, and atomic failure handling.",
   "skills": [

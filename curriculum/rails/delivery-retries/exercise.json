@@ -3,6 +3,7 @@
   "title": "Retry-Safe Delivery Job",
   "version": 1,
   "operation": "rails.delivery-retries.v1",
+  "test_count": 12,
   "duration_minutes": 60,
   "summary": "Finish a background delivery job with explicit state transitions, bounded retry behavior, duplicate suppression, and durable attempt evidence.",
   "skills": [

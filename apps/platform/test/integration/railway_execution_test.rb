@@ -51,6 +51,26 @@ class RailwayExecutionTest < ActionDispatch::IntegrationTest
     assert_nil ExecutionEvidence.summary(execution("execution_completed", "1 runs, 1 assertions, 0 failures, 0 errors, 0 skips"))
   end
 
+  def with_expected_tests(value)
+    original = ExecutionEvidence.method(:expected_tests)
+    ExecutionEvidence.define_singleton_method(:expected_tests) { |_exercise| value }
+    yield
+  ensure
+    ExecutionEvidence.define_singleton_method(:expected_tests, original)
+  end
+
+  test "summary follows the count the exercise publishes rather than a fixed number" do
+    with_expected_tests(7) do
+      assert_nil ExecutionEvidence.summary(execution("execution_completed", "12 runs, 40 assertions, 0 failures, 0 errors, 0 skips"))
+      assert_equal 7, ExecutionEvidence.summary(execution("execution_completed", "7 runs, 20 assertions, 0 failures, 0 errors, 0 skips"))[:passed]
+    end
+    with_expected_tests(nil) do
+      assert_nil ExecutionEvidence.summary(execution("execution_completed", "12 runs, 40 assertions, 0 failures, 0 errors, 0 skips"))
+    end
+    assert_equal 12, ExecutionEvidence.expected_tests(@record.exercise_version)
+    assert_nil ExecutionEvidence.expected_tests(ExerciseVersion.find_by!(slug: "merge-intervals", version: 1))
+  end
+
   test "execution evidence retains the exact saved revision after further editing" do
     original = execution("execution_completed", "12 runs, 158 assertions, 0 failures, 0 errors, 0 skips")
     Workspace.save!(@record, { "app/controllers/events_controller.rb" => "# changed later\n" })

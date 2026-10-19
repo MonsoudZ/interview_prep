@@ -27,7 +27,8 @@ class RailsCurriculumTest < ActionDispatch::IntegrationTest
       public_entry = catalog.find { |e| e["id"] == exercise.id }
       assert public_entry["executable"]
       assert_equal entry.fetch("skills"), public_entry["skills"]
-      assert_equal 12, exercise.starter_files.fetch("test/integration/events_test.rb").scan(/^  test /).length
+      assert_equal entry.fetch("test_count"), exercise.starter_files.fetch("test/integration/events_test.rb").scan(/^  test /).length
+      assert_equal entry.fetch("test_count"), ExecutionEvidence.expected_tests(exercise)
       assert exercise.starter_files.keys.none? { |path| path.include?("reference") || path.include?("review.json") }
       post "/api/sessions", params: { exercise_id: exercise.id, mode: "guided" }, as: :json
       assert_response :created

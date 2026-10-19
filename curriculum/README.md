@@ -21,7 +21,7 @@ Start with guided practice, read the files/tests, and implement one vertical sli
 
 The original Events assets remain in `experiments/rails-runtime`. New Rails exercises live under `rails/<slug>/`:
 
-- `exercise.json`: published identity, execution operation, editorial metadata.
+- `exercise.json`: published identity, execution operation, `test_count` (the number of test groups the runner executes; summaries that report a different count are not shown), editorial metadata.
 - `starter/`: supplied repository overlay and complete task contract.
 - `reference/`: tested solution overlay, never seeded into candidate files or staged into the VM.
 - `review.json`: hints, criteria, probes, next drills, and extension.
