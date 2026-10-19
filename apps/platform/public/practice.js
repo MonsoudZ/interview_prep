@@ -2,14 +2,7 @@ import { mountAutomatedReview } from "./automated-review.js";
 import { previewDiagram } from "./design-model.js";
 import { mountRework } from "./rework.js";
 import { openFollowups } from "./followups.js";
-const escape = (value) =>
-  String(value ?? "").replace(
-    /[&<>"']/g,
-    (char) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        char
-      ],
-  );
+import { esc } from "./ui.js";
 const label = (value) => value.replaceAll("_", " ");
 
 export function mountPractice(session, { api, notice, signal, onOpen }) {
@@ -44,7 +37,7 @@ export function mountPractice(session, { api, notice, signal, onOpen }) {
     host.querySelector("#hints").innerHTML = (support?.hints || [])
       .map(
         (hint) =>
-          `<details class="hint"><summary>${escape(hint.title)}</summary><pre>${escape(hint.body)}</pre></details>`,
+          `<details class="hint"><summary>${esc(hint.title)}</summary><pre>${esc(hint.body)}</pre></details>`,
       )
       .join("");
   }
@@ -108,19 +101,19 @@ async function openReview(session, review, { api, notice, signal, onOpen }) {
   const evidenceOptions =
     '<option value="">No source reference</option>' +
     review.evidence_files
-      .map((path) => `<option value="${escape(path)}">${escape(path)}</option>`)
+      .map((path) => `<option value="${esc(path)}">${esc(path)}</option>`)
       .join("");
-  dialog.innerHTML = `<form id="review-form"><div class="eyebrow">SUBMISSION REVIEW · ${escape(review.content_version)}</div><h2>Review submission</h2><p class="subtitle">Self-assessment against senior-level criteria. These ratings are yours; they are not an AI review or a hiring verdict. Anchor each observed rating to your submitted work.</p><p class="review-revision">Submitted revision <code>${escape(review.revision)}</code></p><details class="review-evidence"><summary>${session.track === "system_design" ? "Practice context & assistance" : "Execution evidence & assistance"}</summary><p>${review.assistance.length} hints revealed during this attempt.</p>${review.assistance.map((hint) => `<p>${escape(hint.title)}</p>`).join("")}${review.executions.length ? review.executions.map((execution) => `<p>Tests · ${escape(execution.status)}</p><pre>${escape(execution.result?.output || "No completed output. This is not a test result.")}</pre>`).join("") : session.track === "system_design" ? "<p>Design reasoning is reviewed from the submitted diagram and notes. Test counts do not evaluate this work.</p>" : "<p>No test execution evidence exists for the submitted revision. Do not infer that the solution passes.</p>"}</details>${review.design ? `<details class="review-evidence submitted-diagram"><summary>Submitted architecture · preserved revision</summary><p>The diagram supports your explanation; component presence alone does not demonstrate a guarantee.</p>${previewDiagram(review.design)}</details>` : ""}<div class="review-criteria">${review.criteria
+  dialog.innerHTML = `<form id="review-form"><div class="eyebrow">SUBMISSION REVIEW · ${esc(review.content_version)}</div><h2>Review submission</h2><p class="subtitle">Self-assessment against senior-level criteria. These ratings are yours; they are not an AI review or a hiring verdict. Anchor each observed rating to your submitted work.</p><p class="review-revision">Submitted revision <code>${esc(review.revision)}</code></p><details class="review-evidence"><summary>${session.track === "system_design" ? "Practice context & assistance" : "Execution evidence & assistance"}</summary><p>${review.assistance.length} hints revealed during this attempt.</p>${review.assistance.map((hint) => `<p>${esc(hint.title)}</p>`).join("")}${review.executions.length ? review.executions.map((execution) => `<p>Tests · ${esc(execution.status)}</p><pre>${esc(execution.result?.output || "No completed output. This is not a test result.")}</pre>`).join("") : session.track === "system_design" ? "<p>Design reasoning is reviewed from the submitted diagram and notes. Test counts do not evaluate this work.</p>" : "<p>No test execution evidence exists for the submitted revision. Do not infer that the solution passes.</p>"}</details>${review.design ? `<details class="review-evidence submitted-diagram"><summary>Submitted architecture · preserved revision</summary><p>The diagram supports your explanation; component presence alone does not demonstrate a guarantee.</p>${previewDiagram(review.design)}</details>` : ""}<div class="review-criteria">${review.criteria
     .map((criterion) => {
       const entry = review.entries[criterion.id] || {
         rating: "not_observed",
         notes: "",
       };
-      return `<fieldset data-criterion="${escape(criterion.id)}"><legend>${escape(criterion.title)}</legend><p>${escape(criterion.target)}</p><p class="review-probe">Consider: ${escape(criterion.probe)}</p><label>Your assessment<select name="${criterion.id}-rating">${review.ratings.map((rating) => `<option value="${rating}" ${entry.rating === rating ? "selected" : ""}>${escape(label(rating))}</option>`).join("")}</select></label><label>Evidence and reasoning<textarea name="${criterion.id}-notes" maxlength="2000" rows="3" placeholder="Explain what the submitted work demonstrates, or what remains unverified.">${escape(entry.notes)}</textarea></label><div class="evidence-fields"><label>Submitted file<select name="${criterion.id}-path">${evidenceOptions}</select></label><label>From line<input name="${criterion.id}-start" type="number" min="1" value="${entry.evidence?.start_line || 1}"></label><label>To line<input name="${criterion.id}-end" type="number" min="1" value="${entry.evidence?.end_line || 1}"></label><button type="button" data-preview="${criterion.id}">Show lines</button></div><pre class="source-reference" id="preview-${criterion.id}"></pre></fieldset>`;
+      return `<fieldset data-criterion="${esc(criterion.id)}"><legend>${esc(criterion.title)}</legend><p>${esc(criterion.target)}</p><p class="review-probe">Consider: ${esc(criterion.probe)}</p><label>Your assessment<select name="${esc(criterion.id)}-rating">${review.ratings.map((rating) => `<option value="${esc(rating)}" ${entry.rating === rating ? "selected" : ""}>${esc(label(rating))}</option>`).join("")}</select></label><label>Evidence and reasoning<textarea name="${esc(criterion.id)}-notes" maxlength="2000" rows="3" placeholder="Explain what the submitted work demonstrates, or what remains unverified.">${esc(entry.notes)}</textarea></label><div class="evidence-fields"><label>Submitted file<select name="${esc(criterion.id)}-path">${evidenceOptions}</select></label><label>From line<input name="${esc(criterion.id)}-start" type="number" min="1" value="${entry.evidence?.start_line || 1}"></label><label>To line<input name="${esc(criterion.id)}-end" type="number" min="1" value="${entry.evidence?.end_line || 1}"></label><button type="button" data-preview="${esc(criterion.id)}">Show lines</button></div><pre class="source-reference" id="preview-${esc(criterion.id)}"></pre></fieldset>`;
     })
     .join(
       "",
-    )}</div><label class="reflection-label">Reflection: what slowed you down, and what will you try differently?<textarea name="reflection" maxlength="4000" rows="4">${escape(review.reflection)}</textarea></label><section class="review-next"><h3>Your next practice</h3><div id="next-steps"></div><details><summary>Senior follow-up · extension</summary><p>${escape(review.follow_up)}</p></details></section>${review.reference_available ? '<details class="review-evidence" id="reference-solution"><summary>Compare a reference implementation</summary><p>Review your own work first. This is one tested approach, not the only acceptable design.</p><button type="button" id="load-reference">Show reference files</button><div id="reference-files"></div></details>' : ""}<p id="review-error" class="error" role="alert"></p><footer><span id="review-save-status" role="status">${review.updated_at ? "Previously saved" : "Not saved yet"}</span><button type="button" id="discard-review">Close without saving</button><button class="primary" type="submit">Save review</button></footer></form>`;
+    )}</div><label class="reflection-label">Reflection: what slowed you down, and what will you try differently?<textarea name="reflection" maxlength="4000" rows="4">${esc(review.reflection)}</textarea></label><section class="review-next"><h3>Your next practice</h3><div id="next-steps"></div><details><summary>Senior follow-up · extension</summary><p>${esc(review.follow_up)}</p></details></section>${review.reference_available ? '<details class="review-evidence" id="reference-solution"><summary>Compare a reference implementation</summary><p>Review your own work first. This is one tested approach, not the only acceptable design.</p><button type="button" id="load-reference">Show reference files</button><div id="reference-files"></div></details>' : ""}<p id="review-error" class="error" role="alert"></p><footer><span id="review-save-status" role="status">${review.updated_at ? "Previously saved" : "Not saved yet"}</span><button type="button" id="discard-review">Close without saving</button><button class="primary" type="submit">Save review</button></footer></form>`;
   const automatedHost = document.createElement("section");
   automatedHost.className = "automated-review";
   const reviewHeader = document.createElement("header");
@@ -167,7 +160,7 @@ async function openReview(session, review, { api, notice, signal, onOpen }) {
         )
           .map(
             ([path, source]) =>
-              `<details><summary>${escape(path)}</summary><pre>${escape(source)}</pre></details>`,
+              `<details><summary>${esc(path)}</summary><pre>${esc(source)}</pre></details>`,
           )
           .join("");
         referenceButton.hidden = true;
@@ -215,7 +208,7 @@ async function openReview(session, review, { api, notice, signal, onOpen }) {
       ? value.next_steps
           .map(
             (step) =>
-              `<p><strong>${escape(step.title)}</strong><br>${escape(step.practice)}</p>`,
+              `<p><strong>${esc(step.title)}</strong><br>${esc(step.practice)}</p>`,
           )
           .join("")
       : "<p>Save ratings to build a practice plan from the areas you identify as needing work. Unobserved criteria remain open; they do not count as demonstrated skills.</p>";

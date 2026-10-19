@@ -8,12 +8,26 @@ import { dashboardPage } from "./session-list.js";
 import { notice } from "./ui.js";
 
 const root = document.querySelector("#app"),
-  api = createApi();
+  transport = createApi();
 let account,
   registrationAllowed,
   screen = null,
   navigation = null;
-function replaceScreen(factory) {
+// A 401 while signed in means the server session expired: return to sign-in once
+// instead of letting every screen keep polling and reporting a connection problem.
+async function api(...args) {
+  try {
+    return await transport(...args);
+  } catch (error) {
+    if (error.status === 401 && account) {
+      account = null;
+      showAuth();
+      notice("Your sign-in expired. Sign in again to continue.");
+    }
+    throw error;
+  }
+}
+function replaceScreen(factory, { fallback = true } = {}) {
   navigation?.destroy();
   navigation = null;
   screen?.destroy();
@@ -21,39 +35,51 @@ function replaceScreen(factory) {
   try {
     screen = factory();
   } catch (error) {
+    // Never keep a destroyed screen as the current one; it would answer unload
+    // guards and openSession checks for a page that no longer exists.
+    screen = null;
     notice(error.message);
+    if (fallback && account) showDashboard().catch(() => {});
+    else if (fallback) showAuth();
+    else
+      root.innerHTML =
+        '<div class="loading">This screen could not open. Reload to try again.</div>';
     throw error;
   }
 }
 function showAuth() {
-  replaceScreen(() =>
-    mountAuth({
-      root,
-      api,
-      registrationAllowed,
-      onSignedIn: async (value) => {
-        account = value;
-        await showDashboard();
-      },
-    }),
+  replaceScreen(
+    () =>
+      mountAuth({
+        root,
+        api,
+        registrationAllowed,
+        onSignedIn: async (value) => {
+          account = value;
+          await showDashboard();
+        },
+      }),
+    { fallback: false },
   );
 }
 async function showDashboard(initialPage = dashboardPage(location.hash)) {
-  replaceScreen(() =>
-    createDashboard({
-      root,
-      api,
-      account,
-      initialPage,
-      notice,
-      onSession: showWorkspace,
-      onMocks: (id) => showMocks(id),
-      onOpenSession: openSession,
-      onSignedOut: () => {
-        account = null;
-        showAuth();
-      },
-    }),
+  replaceScreen(
+    () =>
+      createDashboard({
+        root,
+        api,
+        account,
+        initialPage,
+        notice,
+        onSession: showWorkspace,
+        onMocks: (id) => showMocks(id),
+        onOpenSession: openSession,
+        onSignedOut: () => {
+          account = null;
+          showAuth();
+        },
+      }),
+    { fallback: false },
   );
   const dashboard = screen;
   try {
@@ -119,7 +145,7 @@ window.addEventListener("beforeunload", (event) => {
   }
 });
 try {
-  const boot = await api("/api/bootstrap");
+  const boot = await transport("/api/bootstrap");
   account = boot.account;
   registrationAllowed = boot.registration_allowed;
   if (account) {

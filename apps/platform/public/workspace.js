@@ -582,7 +582,8 @@ export function mountWorkspace({
       if (active?.id !== id || epoch !== mutationEpoch) return;
       absorb(result);
     } catch (error) {
-      setSaveState("Connection interrupted — keep this tab open");
+      if (scope.alive && error.status !== 401)
+        setSaveState("Connection interrupted — keep this tab open");
     } finally {
       pollingRequest = false;
     }

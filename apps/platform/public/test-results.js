@@ -1,3 +1,4 @@
+import { esc } from "./ui.js";
 // Runner text is untrusted evidence. Only render it as text, and never invent passing test names.
 export function parseFailures(output = "") {
   const text = String(output).replace(/\x1b\[[0-9;]*m/g, "");
@@ -34,14 +35,6 @@ export function parseFailures(output = "") {
     };
   });
 }
-const escape = (value) =>
-  String(value ?? "").replace(
-    /[&<>"']/g,
-    (char) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        char
-      ],
-  );
 export function renderTestResults(host, execution, { openFile }) {
   const output = execution.result?.output || "",
     failures = parseFailures(output);
@@ -57,7 +50,7 @@ export function renderTestResults(host, execution, { openFile }) {
   } else if (["queued", "leased"].includes(execution.status)) {
     host.innerHTML = `<div class="result-message"><strong>${execution.status === "queued" ? "Tests queued" : "Running tests…"}</strong><p>Results will appear when the worker returns this saved revision.</p></div>`;
   } else {
-    host.innerHTML = `${failures.length ? `<div class="failure-list">${failures.map((failure, index) => `<details class="test-failure" ${index === 0 ? "open" : ""}><summary><span class="failure-kind">${escape(failure.kind)}</span><span>${escape(failure.name.replaceAll("_", " "))}</span></summary>${failure.path ? `<button class="source-link" type="button" data-diagnostic="${index}">${escape(failure.path)}:${failure.line}</button>` : ""}${failure.expected !== null ? `<div class="assertion-comparison"><div><span>Expected</span><pre>${escape(failure.expected)}</pre></div><div><span>Actual</span><pre>${escape(failure.actual)}</pre></div></div>` : ""}<pre class="failure-message">${escape(failure.message)}</pre></details>`).join("")}</div>` : `<div class="result-message"><strong>${passed ? "All reported tests passed" : summary ? "Run did not finish cleanly" : "No individual test diagnostics were found"}</strong><p>${summary ? `${summary.tests} tests · ${summary.assertions} assertions · ${summary.skipped} skipped${passed ? "" : ` · runner status ${escape(execution.status)} — reported counts are not a passing verdict`}` : "See raw output. An incomplete or unrecognized result is not a passing verdict."}</p></div>`}<p class="results-provenance">Parsed from runner output for revision ${escape(execution.revision.slice(0, 10))}. ${failures.length && summary && failures.length !== summary.failures + summary.errors ? "Some reported failures have no individual diagnostic. " : ""}Test counts are separate from submission review.</p>`;
+    host.innerHTML = `${failures.length ? `<div class="failure-list">${failures.map((failure, index) => `<details class="test-failure" ${index === 0 ? "open" : ""}><summary><span class="failure-kind">${esc(failure.kind)}</span><span>${esc(failure.name.replaceAll("_", " "))}</span></summary>${failure.path ? `<button class="source-link" type="button" data-diagnostic="${index}">${esc(failure.path)}:${failure.line}</button>` : ""}${failure.expected !== null ? `<div class="assertion-comparison"><div><span>Expected</span><pre>${esc(failure.expected)}</pre></div><div><span>Actual</span><pre>${esc(failure.actual)}</pre></div></div>` : ""}<pre class="failure-message">${esc(failure.message)}</pre></details>`).join("")}</div>` : `<div class="result-message"><strong>${passed ? "All reported tests passed" : summary ? "Run did not finish cleanly" : "No individual test diagnostics were found"}</strong><p>${summary ? `${summary.tests} tests · ${summary.assertions} assertions · ${summary.skipped} skipped${passed ? "" : ` · runner status ${esc(execution.status)} — reported counts are not a passing verdict`}` : "See raw output. An incomplete or unrecognized result is not a passing verdict."}</p></div>`}<p class="results-provenance">Parsed from runner output for revision ${esc(execution.revision.slice(0, 10))}. ${failures.length && summary && failures.length !== summary.failures + summary.errors ? "Some reported failures have no individual diagnostic. " : ""}Test counts are separate from submission review.</p>`;
     host.querySelectorAll("[data-diagnostic]").forEach(
       (button) =>
         (button.onclick = () => {
