@@ -1,9 +1,14 @@
 # Trusted, published identities resolve local curriculum files; never request paths.
 # Manifests, rubrics and references are immutable published files, so they are read once
 # per process and deep-frozen; callers must copy before changing anything.
+# Despite the name, this covers every manifest-published exercise; manifests carry a
+# "track" (rails when absent) that selects the curriculum directory.
 class RailsCurriculum
-  def self.entries
-    @entries ||= deep_freeze(Dir.glob(Rails.root.join("../../curriculum/rails/*/exercise.json")).sort.map { |path| JSON.parse(File.read(path)) })
+  def self.entries(track = nil)
+    @entries ||= deep_freeze(Dir.glob(Rails.root.join("../../curriculum/{rails,ruby}/*/exercise.json")).sort.map { |path|
+      JSON.parse(File.read(path)).tap { |entry| entry["track"] ||= "rails" }
+    })
+    track ? @entries.select { |entry| entry.fetch("track") == track } : @entries
   end
 
   def self.find(slug, version)
@@ -26,8 +31,8 @@ class RailsCurriculum
       Rails.root.join("../../experiments/rails-runtime/reference")
     elsif exercise.slug == "merge-intervals" && exercise.version == 2
       Rails.root.join("../../curriculum/ruby/merge-intervals/reference")
-    elsif find(exercise.slug, exercise.version)
-      Rails.root.join("../../curriculum/rails", exercise.slug, "reference")
+    elsif (entry = find(exercise.slug, exercise.version))
+      Rails.root.join("../../curriculum", entry.fetch("track"), exercise.slug, "reference")
     end
     return unless root
     cache(:references, root.to_s) do
@@ -38,7 +43,7 @@ class RailsCurriculum
   def self.review(exercise)
     entry = find(exercise.slug, exercise.version)
     return unless entry
-    cache(:reviews, entry.fetch("slug")) { JSON.parse(File.read(Rails.root.join("../../curriculum/rails", entry.fetch("slug"), "review.json"))) }
+    cache(:reviews, entry.fetch("slug")) { JSON.parse(File.read(Rails.root.join("../../curriculum", entry.fetch("track"), entry.fetch("slug"), "review.json"))) }
   end
 
   def self.cache(store, key)

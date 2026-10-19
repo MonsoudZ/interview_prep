@@ -1,0 +1,17 @@
+{
+  "slug": "rate-limiter",
+  "track": "ruby",
+  "version": 1,
+  "operation": "ruby.rate-limiter.v1",
+  "test_count": 12,
+  "entry_file": "solution.rb",
+  "title": "Sliding-Window Rate Limiter",
+  "duration_minutes": 35,
+  "summary": "Implement a per-key sliding-window rate limiter with exact window boundaries, independent keys, no cost for rejected requests, and bounded memory.",
+  "skills": [
+    "Time windows",
+    "Boundaries",
+    "Memory bounds"
+  ],
+  "difficulty": "Medium \u00b7 systems"
+}

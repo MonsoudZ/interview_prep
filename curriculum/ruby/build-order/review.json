@@ -1,0 +1,55 @@
+{
+  "version": "ruby-build-order-review-v1",
+  "hints": [
+    {
+      "title": "1 \u00b7 Count what each task still waits for",
+      "body": "For every task record how many distinct dependencies have not been placed yet, and for every task the list of tasks that wait on it. A task is ready when its count is zero. Validate every pair while you build these tables: unknown names and self-dependencies are input errors, not graph problems."
+    },
+    {
+      "title": "2 \u00b7 Pull from a ready set, not a stack",
+      "body": "Repeatedly take the smallest ready task, append it, and decrement its followers; any follower that reaches zero becomes ready. If the output is shorter than the task list when the ready set is empty, the rest form a cycle.\\n\\nExample with a different problem: scheduling course prerequisites keeps `remaining[course]` and `unlocks[prerequisite]`, and a course is offered when `remaining` hits zero."
+    },
+    {
+      "title": "3 \u00b7 Smallest-first needs a priority structure",
+      "body": "Taking `ready.min` from an array costs a scan per step, which is quadratic when every task is ready at once. Keep the ready set in a binary min-heap (push and pop are logarithmic), or keep it sorted and insert with a binary search. Test the 100,000-independent-tasks case mentally: how many comparisons does each approach make?"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "correctness",
+      "title": "Valid order with deterministic ties",
+      "target": "Every dependency is respected and the smallest ready task is chosen at every step, so the result is unique.",
+      "probe": "Why does a depth-first post-order produce a valid order but fail the determinism rule?",
+      "practice": "Trace the visible four-task example by hand, listing the ready set before each pick."
+    },
+    {
+      "id": "errors",
+      "title": "Cycles and invalid input are distinguished",
+      "target": "Unknown names and self-dependencies raise ArgumentError before any ordering; a cycle raises CycleError after the ready set is exhausted.",
+      "probe": "How do you know a cycle exists without searching for it explicitly?",
+      "practice": "Explain what the output length tells you when the ready set empties early."
+    },
+    {
+      "id": "complexity",
+      "title": "Near-linear cost",
+      "target": "The solution is O((tasks + dependencies) log tasks); the 100,000-task groups complete in bounded time.",
+      "probe": "Which single line would make your solution quadratic, and which hidden group would catch it?",
+      "practice": "Replace the heap with `ready.min` and watch the independent-tasks group time out."
+    },
+    {
+      "id": "ownership",
+      "title": "Inputs are left intact",
+      "target": "Neither `tasks` nor `dependencies` is mutated; duplicate pairs are counted once.",
+      "probe": "Where could an accidental `sort!` or `uniq!` sneak in, and how do you guard against it?",
+      "practice": "Freeze the inputs in a scratch test and confirm nothing raises."
+    },
+    {
+      "id": "verification",
+      "title": "Predicted failures before running",
+      "target": "Named the test a naive approach would fail and checked the prediction against the output.",
+      "probe": "Before running, which group did you expect to be slowest and why?",
+      "practice": "Write one expected ordering and one expected error before each run."
+    }
+  ],
+  "follow_up": "Tasks now carry durations and two workers run them in parallel. Explain what a single ordering no longer determines, what you would compute instead (for example a schedule or the critical path), and where the smallest-first rule still matters. Treat this as a separate extension of the original contract."
+}

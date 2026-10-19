@@ -1,0 +1,48 @@
+{
+  "version": "ruby-rate-limiter-review-v1",
+  "hints": [
+    {
+      "title": "1 \u00b7 Decide what you store per key",
+      "body": "A counter per fixed window lets a burst straddle two windows. A sliding window needs the timestamps of the accepted requests that could still count. Ask: what is the most you ever need to keep for one key? The answer bounds your memory."
+    },
+    {
+      "title": "2 \u00b7 Prune from the front, then decide",
+      "body": "Keep each key's accepted timestamps oldest first. On every call drop timestamps that have expired, then compare what is left to the limit. Only append when you return `true`.\\n\\nExample with a different problem: a login-attempt lock keeps `attempts[user].shift while now - attempts[user].first >= 900` before counting the remaining attempts."
+    },
+    {
+      "title": "3 \u00b7 Put the boundary in one place",
+      "body": "Expiry is `now - t >= window_seconds`; still counting is `now - t < window_seconds`. Write that comparison once in a helper that both `allow?` and `remaining` use, so the two methods cannot disagree. Then test `window_seconds` exactly, and a hair before it."
+    }
+  ],
+  "criteria": [
+    {
+      "id": "correctness",
+      "title": "Sliding window is exact",
+      "target": "Requests count while `now - t < window_seconds` and expire at exactly `window_seconds`; rejected requests are never recorded; keys never interfere.",
+      "probe": "At what instant does a request stop counting, and which comparison operator encodes that?",
+      "practice": "Write a table of five timestamps and mark which ones count at three different `now` values."
+    },
+    {
+      "id": "memory",
+      "title": "Bounded memory",
+      "target": "Each key retains at most `limit` timestamps; expired and rejected requests leave nothing behind.",
+      "probe": "What is the largest number of timestamps your structure can hold for one key, and why?",
+      "practice": "Explain how a version that only counts matching timestamps without pruning fails the 100,000-call group."
+    },
+    {
+      "id": "boundaries",
+      "title": "Equal and fractional timestamps",
+      "target": "Several requests at the same `now` are handled; Float timestamps and fractional windows work; arguments are validated.",
+      "probe": "Why does `remaining` need the same pruning as `allow?`?",
+      "practice": "Add a visible test with three requests at the same second and a 0.5-second window."
+    },
+    {
+      "id": "verification",
+      "title": "Reasoned before running",
+      "target": "Predicted the boundary behaviour and the accepted count of the large sequence before running the suite.",
+      "probe": "In the 100,000-call group with limit 5 and a 2-second window at 0.1-second spacing, roughly what fraction is accepted and why?",
+      "practice": "Before each run, state one expected value and compare it to the output."
+    }
+  ],
+  "follow_up": "The limiter now runs on several application servers at once. Describe what state must be shared, how you would keep the boundary exact or where you would accept approximation, and what the cost per request becomes. Treat this as a separate extension of the original contract."
+}

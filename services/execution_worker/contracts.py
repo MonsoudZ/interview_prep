@@ -22,6 +22,12 @@ for scenario in ("tenant-projects", "idempotent-checkout", "delivery-retries", "
 OPERATIONS["ruby.intervals.v1"] = ["ruby", "/opt/runner/ruby.rb"]
 OPERATIONS["ruby.intervals.prepare.v1"] = ["ruby", "/opt/runner/ruby.rb", "--prepare"]
 
+# Ruby exercises published with a curriculum manifest; images labelled rails-ruby-v3 carry them.
+RUBY_SCENARIOS = ("lru-cache", "rate-limiter", "build-order")
+for scenario in RUBY_SCENARIOS:
+    OPERATIONS[f"ruby.{scenario}.v1"] = ["ruby", "/opt/runner/ruby.rb", "--exercise", scenario]
+    OPERATIONS[f"ruby.{scenario}.prepare.v1"] = ["ruby", "/opt/runner/ruby.rb", "--exercise", scenario, "--prepare"]
+
 
 class ContractError(ValueError):
     pass

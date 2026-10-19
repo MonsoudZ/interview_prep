@@ -22,7 +22,7 @@ class RailsCurriculumTest < ActionDispatch::IntegrationTest
     get "/api/exercises"
     catalog = response.parsed_body.fetch("exercises")
     assert_equal 8, catalog.count { |e| e["track"] == "rails" }
-    RailsCurriculum.entries.each do |entry|
+    RailsCurriculum.entries("rails").each do |entry|
       exercise = ExerciseVersion.find_by!(slug: entry.fetch("slug"), version: 1)
       public_entry = catalog.find { |e| e["id"] == exercise.id }
       assert public_entry["executable"]

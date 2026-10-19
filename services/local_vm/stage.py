@@ -22,7 +22,8 @@ def main():
       ROOT / "experiments/rails-runtime/template", ROOT / "services/local_vm/guest.py"]
     paths += [ROOT / "curriculum/rails" / slug / "starter" for slug in
               ("tenant-projects", "idempotent-checkout", "delivery-retries", "activity-feed", "support-escalations", "invoice-amendments", "safe-backfill")]
-    paths += [ROOT / "curriculum/ruby/merge-intervals/starter", ROOT / "curriculum/ruby/merge-intervals/hidden_test.rb"]
+    for slug in ("merge-intervals", "lru-cache", "rate-limiter", "build-order"):
+        paths += [ROOT / "curriculum/ruby" / slug / "starter", ROOT / "curriculum/ruby" / slug / "hidden_test.rb"]
     paths += sorted((ROOT / "services/execution_worker").glob("*.py"))
     buffer = io.BytesIO()
     excluded = {"__pycache__", ".state", ".git", "log", "storage", "tmp"}

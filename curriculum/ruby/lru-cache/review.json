@@ -1,0 +1,48 @@
+{
+  "version": "ruby-lru-cache-review-v1",
+  "hints": [
+    {
+      "title": "1 \u00b7 Name the two operations you need",
+      "body": "Every call needs a constant-time lookup by key and a constant-time move-to-most-recent. A plain Array gives you order but linear lookup; a plain Hash gives you lookup but no reordering. Write down which structure in Ruby offers both before writing code."
+    },
+    {
+      "title": "2 \u00b7 Ruby hashes remember insertion order",
+      "body": "A Hash iterates keys in insertion order, and deleting then reinserting a key moves it to the end. That is the whole reordering primitive: `h.delete(k); h[k] = v`. The first key in the hash is then always the least recently used one, and `h.shift` removes it.\\n\\nExample with a different problem: a most-recent-files list keeps `files.delete(path); files[path] = true` on every open, and `files.shift` when it grows past ten."
+    },
+    {
+      "title": "3 \u00b7 Check eviction after insertion, and only on insertion",
+      "body": "Insert or replace first, then evict while size exceeds capacity. Replacing an existing key cannot grow the cache, so it never evicts. A `get` on a missing key must not insert anything and must not change order. Walk the visible test for a replaced key by hand: which key is first in `keys` afterwards?"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "correctness",
+      "title": "Eviction and recency are exact",
+      "target": "The least recently used key is evicted only when a new key exceeds capacity; `get` and `put` both refresh recency; replacing a key never evicts.",
+      "probe": "Which operations change the recency order, and which do not? Give one sequence where a `get` changes which key gets evicted next.",
+      "practice": "Write the recency order after each of eight operations by hand before running the suite."
+    },
+    {
+      "id": "complexity",
+      "title": "Constant-time operations",
+      "target": "`get` and `put` do not scan the entries; the 100,000-operation groups run in bounded time.",
+      "probe": "What is the cost of `delete` plus reinsert on a Ruby Hash, and why is `keys` allowed to be linear?",
+      "practice": "Replace one constant-time step with a linear scan and observe which hidden group fails."
+    },
+    {
+      "id": "boundaries",
+      "title": "Capacity one, nil values and odd keys",
+      "target": "Capacity one works; a stored `nil` is an entry; arrays, strings and integers all work as keys.",
+      "probe": "Why must `get` distinguish a stored `nil` from an absent key, and how does your code do that?",
+      "practice": "Add a visible test for a stored `nil` and make it pass without special-casing."
+    },
+    {
+      "id": "verification",
+      "title": "Reasoned about the oracle",
+      "target": "Predicted a failing sequence before running tests and explained what each failing group means.",
+      "probe": "What sequence would expose an off-by-one in the eviction check?",
+      "practice": "Before each run, write the expected `keys` for one sequence and compare."
+    }
+  ],
+  "follow_up": "Entries now also expire after a fixed time-to-live. Describe what `get` must check, how expiry interacts with the recency order, and what you would measure. Treat this as a separate extension of the original contract."
+}

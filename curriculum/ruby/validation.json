@@ -1,33 +1,146 @@
 [
   {
+    "exercise": "build-order",
     "variant": "starter",
-    "summary": "12 runs, 13 assertions, 12 failures, 0 errors, 0 skips"
+    "summary": "12 runs, 11 assertions, 10 failures, 1 errors, 0 skips"
   },
   {
+    "exercise": "build-order",
     "variant": "reference",
-    "summary": "12 runs, 112 assertions, 0 failures, 0 errors, 0 skips"
+    "summary": "12 runs, 1858 assertions, 0 failures, 0 errors, 0 skips"
   },
   {
-    "variant": "shrinking_finish",
-    "summary": "12 runs, 13 assertions, 4 failures, 0 errors, 0 skips"
+    "exercise": "build-order",
+    "variant": "no_tie_break",
+    "summary": "12 runs, 66 assertions, 4 failures, 0 errors, 0 skips"
   },
   {
-    "variant": "touching_not_merged",
-    "summary": "12 runs, 15 assertions, 5 failures, 0 errors, 0 skips"
+    "exercise": "build-order",
+    "variant": "no_cycle_check",
+    "summary": "12 runs, 1858 assertions, 2 failures, 0 errors, 0 skips"
   },
   {
-    "variant": "mutates_input",
-    "summary": "12 runs, 111 assertions, 1 failures, 0 errors, 0 skips"
+    "exercise": "build-order",
+    "variant": "self_dependency_allowed",
+    "summary": "12 runs, 1858 assertions, 1 failures, 0 errors, 0 skips"
   },
   {
-    "variant": "no_sort",
-    "summary": "12 runs, 13 assertions, 10 failures, 0 errors, 0 skips"
-  },
-  {
+    "exercise": "build-order",
     "variant": "syntax_only",
     "preparation_succeeded": true
   },
   {
+    "exercise": "build-order",
+    "variant": "syntax_error",
+    "preparation_succeeded": false
+  },
+  {
+    "exercise": "lru-cache",
+    "variant": "starter",
+    "summary": "12 runs, 14 assertions, 11 failures, 1 errors, 0 skips"
+  },
+  {
+    "exercise": "lru-cache",
+    "variant": "reference",
+    "summary": "12 runs, 21145 assertions, 0 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "lru-cache",
+    "variant": "get_without_refresh",
+    "summary": "12 runs, 25 assertions, 3 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "lru-cache",
+    "variant": "evicts_one_early",
+    "summary": "12 runs, 18 assertions, 9 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "lru-cache",
+    "variant": "replace_does_not_refresh",
+    "summary": "12 runs, 48 assertions, 2 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "lru-cache",
+    "variant": "syntax_only",
+    "preparation_succeeded": true
+  },
+  {
+    "exercise": "lru-cache",
+    "variant": "syntax_error",
+    "preparation_succeeded": false
+  },
+  {
+    "exercise": "merge-intervals",
+    "variant": "starter",
+    "summary": "12 runs, 13 assertions, 12 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "merge-intervals",
+    "variant": "reference",
+    "summary": "12 runs, 112 assertions, 0 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "merge-intervals",
+    "variant": "shrinking_finish",
+    "summary": "12 runs, 13 assertions, 4 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "merge-intervals",
+    "variant": "touching_not_merged",
+    "summary": "12 runs, 15 assertions, 5 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "merge-intervals",
+    "variant": "mutates_input",
+    "summary": "12 runs, 111 assertions, 1 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "merge-intervals",
+    "variant": "no_sort",
+    "summary": "12 runs, 13 assertions, 10 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "merge-intervals",
+    "variant": "syntax_only",
+    "preparation_succeeded": true
+  },
+  {
+    "exercise": "merge-intervals",
+    "variant": "syntax_error",
+    "preparation_succeeded": false
+  },
+  {
+    "exercise": "rate-limiter",
+    "variant": "starter",
+    "summary": "12 runs, 12 assertions, 12 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "rate-limiter",
+    "variant": "reference",
+    "summary": "12 runs, 26018 assertions, 0 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "rate-limiter",
+    "variant": "boundary_inclusive",
+    "summary": "12 runs, 10033 assertions, 6 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "rate-limiter",
+    "variant": "records_rejections",
+    "summary": "12 runs, 10069 assertions, 5 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "rate-limiter",
+    "variant": "shared_log",
+    "summary": "12 runs, 21 assertions, 3 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "rate-limiter",
+    "variant": "syntax_only",
+    "preparation_succeeded": true
+  },
+  {
+    "exercise": "rate-limiter",
     "variant": "syntax_error",
     "preparation_succeeded": false
   }

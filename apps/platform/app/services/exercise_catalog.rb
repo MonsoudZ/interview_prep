@@ -31,8 +31,9 @@ class ExerciseCatalog
     end
     manifest = RailsCurriculum.find(exercise.slug, exercise.version)
     if manifest
+      runner = manifest.fetch("track") == "ruby" ? "Isolated Ruby runner" : "Isolated Rails runner"
       return manifest.slice("summary", "difficulty", "skills").symbolize_keys.merge(
-        brief: exercise.brief, tools: ["Ruby editor", "Isolated Rails runner", "#{manifest.fetch('test_count')} test groups", "Guided hints", "Submission self-review"],
+        brief: exercise.brief, tools: ["Ruby editor", runner, "#{manifest.fetch('test_count')} test groups", "Guided hints", "Submission self-review"],
         difficulty_note: "Editorial practice level, not a calibrated interview score.")
     end
     CONTENT.fetch(exercise.slug) do

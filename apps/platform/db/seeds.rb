@@ -54,6 +54,23 @@ ExerciseVersion.find_or_create_by!(slug: "merge-intervals", version: 2) do |exer
   }
 end
 
+# Ruby exercises published with a manifest. Hidden tests and references never enter candidate source.
+Dir.glob(root.join("curriculum/ruby/*/exercise.json")).sort.each do |manifest|
+  metadata = JSON.parse(File.read(manifest))
+  starter = Pathname.new(manifest).dirname.join("starter")
+  starter_files = Dir.glob(starter.join("**/*")).select { |path| File.file?(path) }.to_h { |path|
+    [Pathname.new(path).relative_path_from(starter).to_s, File.read(path)]
+  }
+  ExerciseVersion.find_or_create_by!(slug: metadata.fetch("slug"), version: metadata.fetch("version")) do |exercise|
+    exercise.title = metadata.fetch("title")
+    exercise.track = "ruby"
+    exercise.operation = metadata.fetch("operation")
+    exercise.duration_minutes = metadata.fetch("duration_minutes")
+    exercise.brief = starter_files.fetch("BRIEF.md")
+    exercise.starter_files = starter_files
+  end
+end
+
 design_starter = root.join("curriculum/system_design/webhook-delivery/starter")
 ExerciseVersion.find_or_create_by!(slug: "webhook-delivery", version: 2) do |exercise|
   exercise.title = "Reliable Webhook Delivery"

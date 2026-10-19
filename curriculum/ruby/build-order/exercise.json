@@ -1,0 +1,17 @@
+{
+  "slug": "build-order",
+  "track": "ruby",
+  "version": 1,
+  "operation": "ruby.build-order.v1",
+  "test_count": 12,
+  "entry_file": "solution.rb",
+  "title": "Deterministic Build Order",
+  "duration_minutes": 40,
+  "summary": "Order tasks so every dependency runs first, choosing the smallest ready task at each step, rejecting cycles and unknown references, on inputs up to 100,000 tasks.",
+  "skills": [
+    "Graphs",
+    "Topological sort",
+    "Determinism"
+  ],
+  "difficulty": "Senior \u00b7 algorithms"
+}

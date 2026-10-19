@@ -143,6 +143,8 @@ On Rails, `SessionExecution` owns queue admission, idempotency, quotas, and acco
 
 ## Expanded curriculum and Ruby execution
 
+The Ruby track now has four executable exercises: Merge Busy Intervals, Bounded LRU Cache, Sliding-Window Rate Limiter and Deterministic Build Order. The three newer ones are published from `curriculum/ruby/*/exercise.json` manifests with their own rubrics and hints; run `ruby bin/rails db:seed` to publish them and rebuild the sandbox image (inventory label `rails-ruby-v3`) so a worker advertises their operations.
+
 Eight Rails scenarios now form an ordered path: Events API, tenant authorization repair, idempotent checkout, delivery retries, activity-feed performance, support escalation repair, invoice revision concurrency, and safe legacy backfills. Every new repository has 12 executable tests, a full brief, three hints, targeted senior criteria/drills, and a tested reference. Ruby intervals v2 runs six visible and six additional test groups, including generated, ownership, and 100,000-interval cases. Version-1 writing sessions are preserved; new selection uses the latest version. Reference solutions are owner-scoped and available only after submission through the review dialog.
 
 The worker advertises only operations present in its immutable image. Specific prepare operations prevent an Events-only worker from leasing unrelated scenarios. Code/paths and signatures remain bounded; candidate source never executes on the app server. See [curriculum validation](../../curriculum/README.md) and [local VM verification](../../deploy/local-vm/VERIFICATION.md). Existing Railway sandbox checkpoints advertise only their installed Events operation; expanding the local image does not silently expand hosted capabilities.

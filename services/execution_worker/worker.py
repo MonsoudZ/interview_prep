@@ -13,7 +13,7 @@ import subprocess
 import sys
 import time
 
-from contracts import ContractError, MAX_JOB_BYTES, OPERATIONS, canonical, validate, verify
+from contracts import ContractError, MAX_JOB_BYTES, OPERATIONS, RUBY_SCENARIOS, canonical, validate, verify
 
 OUTPUT_LIMIT = 256 * 1024
 
@@ -112,11 +112,13 @@ def inspect_image(docker, image):
         raise InfrastructureError("Worker image does not declare the expected user/exercise contract")
     report = {key: info.get(key) for key in ("Id", "Os", "Architecture", "Created")}
     inventory = labels.get("interview.curriculum")
-    if inventory == "rails-ruby-v2":
+    if inventory == "rails-ruby-v3":
         report["operations"] = list(OPERATIONS)
+    elif inventory == "rails-ruby-v2":
+        report["operations"] = [op for op in OPERATIONS if not any(op.startswith(f"ruby.{slug}.") for slug in RUBY_SCENARIOS)]
     elif inventory in ("rails-v1", "rails-ruby-v1"):
         legacy = ("tenant-projects", "idempotent-checkout", "delivery-retries", "activity-feed")
-        report["operations"] = [op for op in OPERATIONS if op.startswith("rails.events.") or any(op.startswith(f"rails.{slug}.") for slug in legacy) or (inventory == "rails-ruby-v1" and op.startswith("ruby."))]
+        report["operations"] = [op for op in OPERATIONS if op.startswith("rails.events.") or any(op.startswith(f"rails.{slug}.") for slug in legacy) or (inventory == "rails-ruby-v1" and op.startswith("ruby.intervals."))]
     else:
         report["operations"] = ["rails.events.v1", "rails.events.prepare.v1"]
     return report

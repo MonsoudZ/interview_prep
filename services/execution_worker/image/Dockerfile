@@ -25,10 +25,16 @@ COPY curriculum/rails/invoice-amendments/starter /opt/curriculum/invoice-amendme
 COPY curriculum/rails/safe-backfill/starter /opt/curriculum/safe-backfill/starter
 COPY curriculum/ruby/merge-intervals/starter /opt/ruby/merge-intervals/starter
 COPY curriculum/ruby/merge-intervals/hidden_test.rb /opt/ruby/merge-intervals/hidden_test.rb
+COPY curriculum/ruby/lru-cache/starter /opt/ruby/lru-cache/starter
+COPY curriculum/ruby/lru-cache/hidden_test.rb /opt/ruby/lru-cache/hidden_test.rb
+COPY curriculum/ruby/rate-limiter/starter /opt/ruby/rate-limiter/starter
+COPY curriculum/ruby/rate-limiter/hidden_test.rb /opt/ruby/rate-limiter/hidden_test.rb
+COPY curriculum/ruby/build-order/starter /opt/ruby/build-order/starter
+COPY curriculum/ruby/build-order/hidden_test.rb /opt/ruby/build-order/hidden_test.rb
 COPY services/execution_worker/image/ruby.rb /opt/runner/ruby.rb
 COPY services/execution_worker/image/run.rb /opt/runner/run.rb
 RUN chmod -R a-w /opt/exercise /opt/runner /opt/curriculum /opt/ruby && mkdir /workspace && chown 1000:1000 /workspace
-LABEL interview.curriculum="rails-ruby-v2"
+LABEL interview.curriculum="rails-ruby-v3"
 LABEL interview.exercise="rails.events.v1" interview.contract="1"
 USER 1000:1000
 WORKDIR /workspace
