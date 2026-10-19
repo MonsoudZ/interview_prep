@@ -214,10 +214,9 @@ export function mountWorkspace({
         dirty = true;
         setSaveState("Unsaved changes");
         clearTimeout(autosave);
-        autosave = setTimeout(
-          () => save().catch((error) => notice(error.message)),
-          800,
-        );
+        autosave = setTimeout(() => {
+          if (!conflict) save().catch((error) => notice(error.message));
+        }, 800);
       },
       onPosition: (path, position) => {
         if (scope.alive) rememberPosition(path, position);
@@ -310,10 +309,9 @@ export function mountWorkspace({
       renderCode();
       setSaveState("Unsaved changes");
       clearTimeout(autosave);
-      autosave = setTimeout(
-        () => save().catch((error) => notice(error.message)),
-        800,
-      );
+      autosave = setTimeout(() => {
+        if (!conflict) save().catch((error) => notice(error.message));
+      }, 800);
     };
     for (const action of ["prepare", "start", "submit", "run"])
       root.querySelector("#" + action).onclick = () => sessionAction(action);
@@ -374,10 +372,12 @@ export function mountWorkspace({
   async function save() {
     if (!scope.alive) return;
     clearTimeout(autosave);
-    if (conflict)
+    if (conflict) {
+      if (!dirty) return;
       throw new Error(
         "A save conflict needs attention. Copy your unsaved code before reopening the session.",
       );
+    }
     if (saving) {
       await saving;
       if (dirty) return save();
@@ -404,10 +404,10 @@ export function mountWorkspace({
         setSaveState(dirty ? "Unsaved changes" : "Saved");
         renderSessionState();
       })
-      .catch((error) => {
+      .catch(async (error) => {
         dirty = true;
-        if (error.status === 409) conflict = true;
         setSaveState("Save failed — work kept in this tab");
+        if (error.status === 409) await reconcileRejectedSave();
         throw error;
       });
     try {
@@ -503,6 +503,7 @@ export function mountWorkspace({
           const execution = active.executions[Number(button.dataset.execution)];
           selectedExecutionId = execution.id;
           showOutput(execution);
+          if (execution.result?.output_omitted) loadOutput(execution.id);
         }),
     );
     const selectedExecution =
@@ -545,12 +546,14 @@ export function mountWorkspace({
             : "No complete test-count summary was reported.";
     root.querySelector("#output").textContent =
       execution.result?.output ||
-      (execution.status === "queued"
-        ? "Your code is saved. Execution will begin when a worker is available."
-        : execution.status === "leased"
-          ? "Waiting for the worker’s result…"
-          : "No output was returned.");
-    const key = `${execution.id}:${execution.status}`;
+      (execution.result?.output_omitted
+        ? "Loading output…"
+        : execution.status === "queued"
+          ? "Your code is saved. Execution will begin when a worker is available."
+          : execution.status === "leased"
+            ? "Waiting for the worker’s result…"
+            : "No output was returned.");
+    const key = `${execution.id}:${execution.status}:${execution.result?.output_omitted ? "partial" : "full"}`;
     if (key !== lastOutputKey) {
       lastOutputKey = key;
       renderTestResults(root.querySelector("#test-details"), execution, {
@@ -575,33 +578,71 @@ export function mountWorkspace({
     const epoch = mutationEpoch;
     try {
       const id = active.id;
-      const result = await api(`/api/sessions/${id}`);
+      const result = await api(`/api/sessions/${id}${outputQuery()}`);
       if (active?.id !== id || epoch !== mutationEpoch) return;
-      if (result.revision !== active.revision && !saving) {
-        conflict = true;
-        setSaveState("Newer revision exists — reopen before editing");
-        sourceEditor?.setReadOnly(true);
-      }
-      for (const key of [
-        "status",
-        "deadline_at",
-        "submitted_at",
-        "submitted_revision",
-        "executions",
-        "worker_available",
-      ])
-        active[key] = result[key];
-      serverOffset = new Date(result.server_time).getTime() - Date.now();
-      renderSessionState();
-      maybePrepare();
-      if (active.status === "submitted") {
-        sourceEditor?.setReadOnly(true);
-        if (dirty) setSaveState("Late edits kept in this tab; not submitted");
-      }
+      absorb(result);
     } catch (error) {
       setSaveState("Connection interrupted — keep this tab open");
     } finally {
       pollingRequest = false;
+    }
+  }
+  // Apply a fresh server view of the session. A revision we did not write is a
+  // conflict; a submitted or stage-locked session is a server decision, not a conflict.
+  function absorb(result) {
+    if (result.revision !== active.revision) {
+      conflict = true;
+      setSaveState("Newer revision exists — reopen before editing");
+      sourceEditor?.setReadOnly(true);
+    }
+    for (const key of [
+      "status",
+      "deadline_at",
+      "submitted_at",
+      "submitted_revision",
+      "executions",
+      "worker_available",
+    ])
+      active[key] = result[key];
+    serverOffset = new Date(result.server_time).getTime() - Date.now();
+    renderSessionState();
+    maybePrepare();
+    if (active.status === "submitted") {
+      sourceEditor?.setReadOnly(true);
+      if (dirty) setSaveState("Late edits kept in this tab; not submitted");
+    }
+  }
+  async function reconcileRejectedSave() {
+    const id = active.id;
+    try {
+      const result = await api(`/api/sessions/${id}`);
+      if (!scope.alive || active?.id !== id) return;
+      absorb(result);
+    } catch {
+      if (!scope.alive || active?.id !== id) return;
+      conflict = true;
+      sourceEditor?.setReadOnly(true);
+    }
+  }
+  function outputQuery() {
+    return selectedExecutionId
+      ? `?execution_id=${encodeURIComponent(selectedExecutionId)}`
+      : "";
+  }
+  async function loadOutput(executionId) {
+    const id = active.id;
+    try {
+      const result = await api(
+        `/api/sessions/${id}?execution_id=${encodeURIComponent(executionId)}`,
+      );
+      if (!scope.alive || active?.id !== id) return;
+      const loaded = result.executions.find((e) => e.id === executionId);
+      const index = active.executions.findIndex((e) => e.id === executionId);
+      if (!loaded || index < 0) return;
+      active.executions[index] = loaded;
+      if (selectedExecutionId === executionId) showOutput(loaded);
+    } catch (error) {
+      if (scope.alive && error.name !== "AbortError") notice(error.message);
     }
   }
   function updateTimer() {

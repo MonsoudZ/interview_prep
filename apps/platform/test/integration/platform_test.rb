@@ -336,6 +336,28 @@ class PlatformTest < ActionDispatch::IntegrationTest
     assert_match "lease expired", execution.fetch("result").fetch("output")
   end
 
+  test "workspace polling ships runner output only for the newest or selected execution" do
+    register
+    record = create_interview
+    operation(record["id"], "execute")
+    deliver(lease, "output" => "first run output")
+    assert_response :ok
+    operation(record["id"], "execute")
+    deliver(lease, "output" => "second run output")
+    assert_response :ok
+    get "/api/sessions/#{record['id']}"
+    assert_response :ok
+    newest, older = body.fetch("executions")
+    assert_equal "second run output", newest.fetch("result").fetch("output")
+    refute older.fetch("result").key?("output")
+    assert older.fetch("result").fetch("output_omitted")
+    assert_equal "execution_completed", older.fetch("result").fetch("status")
+    get "/api/sessions/#{record['id']}", params: { execution_id: older.fetch("id") }
+    assert_response :ok
+    assert_equal "first run output", body.fetch("executions").second.fetch("result").fetch("output")
+    refute body.fetch("executions").second.fetch("result").key?("output_omitted")
+  end
+
   test "published exercise versions and snapshots cannot be updated" do
     register
     record = create_interview

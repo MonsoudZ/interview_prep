@@ -48,7 +48,7 @@ class InterviewSessionsController < ApplicationController
     record = owner_session
     WorkerJobs.expire_leases!(scope: record.execution_requests)
     record.reload.expire!
-    render json: SessionPresenter.call(record)
+    render json: SessionPresenter.call(record, with_output: params[:execution_id].to_s.presence)
   end
 
   def practice

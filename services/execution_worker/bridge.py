@@ -8,7 +8,6 @@ import shutil
 import signal
 import sys
 import threading
-import time
 from urllib.parse import urlparse
 from urllib.request import Request, HTTPRedirectHandler, build_opener
 from urllib.error import HTTPError
@@ -72,7 +71,7 @@ def main():
         return request(args.url, bridge_key, "/internal/workers/heartbeat", {
             "worker_id": args.worker_id, "capabilities": inventory["operations"]})
 
-    while True:
+    def cycle():
         # Deliver persisted results before asking for another lease.
         for pending in sorted(args.state.glob("delivery-*.json")):
             data = json.loads(pending.read_text())
@@ -121,11 +120,23 @@ def main():
             request(args.url, bridge_key, "/internal/executions/" + payload["job_id"] + "/result", delivery)
             pending.unlink()
             print(json.dumps({"job_id": payload["job_id"], "status": result["status"]}), flush=True)
-            if stopping.is_set():
-                return
+
+    failures = 0
+    while not stopping.is_set():
+        try:
+            cycle()
+            failures = 0
+        except Exception as error:
+            # A transient control-plane or network error must not stop the worker. Persisted
+            # deliveries are retried on the next cycle and unfinished leases expire server-side.
+            if args.once or stopping.is_set():
+                raise
+            failures += 1
+            print(json.dumps({"status": "bridge_retrying", "attempt": failures, "error": str(error)}), file=sys.stderr, flush=True)
         if args.once:
             return
-        time.sleep(2)
+        if stopping.wait(min(60, 2 * 2 ** min(failures, 5)) if failures else 2):
+            return
 
 
 if __name__ == "__main__":

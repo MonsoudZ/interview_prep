@@ -7,7 +7,38 @@ import {
   shouldAutoPrepare,
   preparationRequestId,
 } from "../../public/workspace-state.js";
-import { parseFailures } from "../../public/test-results.js";
+import { parseFailures, renderTestResults } from "../../public/test-results.js";
+
+test("a clean summary from a failed command is not presented as passing", () => {
+  const host = { innerHTML: "", querySelectorAll: () => [] };
+  const execution = {
+    purpose: "tests",
+    status: "execution_failed",
+    revision: "abcdef0123456789",
+    result: {
+      output: "12 runs, 30 assertions, 0 failures, 0 errors, 0 skips\n",
+    },
+    reported_test_summary: {
+      reported: true,
+      tests: 12,
+      assertions: 30,
+      failures: 0,
+      errors: 0,
+      skipped: 0,
+      passed: 12,
+    },
+  };
+  renderTestResults(host, execution, { openFile() {} });
+  assert.match(host.innerHTML, /Run did not finish cleanly/);
+  assert.match(host.innerHTML, /runner status execution_failed/);
+  assert.doesNotMatch(host.innerHTML, /All reported tests passed/);
+  renderTestResults(
+    host,
+    { ...execution, status: "execution_completed" },
+    { openFile() {} },
+  );
+  assert.match(host.innerHTML, /All reported tests passed/);
+});
 
 test("runner diagnostics preserve expected/actual values, source, and failure order", () => {
   const output = `Failure:\nEventsTest#test_creates [test/integration/events_test.rb:22]:\nExpected response to be a <201: created>, but was a <501: Not Implemented>\nResponse body: \n\nbin/rails test test/integration/events_test.rb:22\n\nF\n\nFailure:\nEventsTest#test_lists [test/integration/events_test.rb:73]:\nExpected: []\n  Actual: [1]\n\nFinished in 0.1s\n12 runs, 12 assertions, 2 failures, 0 errors, 0 skips`;

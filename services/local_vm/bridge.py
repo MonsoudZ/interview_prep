@@ -9,7 +9,6 @@ import signal
 import subprocess
 import sys
 import threading
-import time
 import uuid
 from urllib.error import HTTPError
 
@@ -67,7 +66,7 @@ def main():
             if error.code not in (404, 409):
                 raise
             pending.rename(pending.with_name(pending.name.replace("delivery-", "rejected-", 1)))
-    while not stopping.is_set():
+    def cycle():
         for pending in sorted(state.glob("delivery-*.json")):
             deliver(pending)
         heartbeat()
@@ -103,9 +102,23 @@ def main():
                 os.fsync(stream.fileno())
             deliver(pending)
             print(json.dumps({"job_id": payload["job_id"], "status": result["status"]}), flush=True)
+
+    failures = 0
+    while not stopping.is_set():
+        try:
+            cycle()
+            failures = 0
+        except Exception as error:
+            # A transient control-plane or network error must not stop the worker. Persisted
+            # deliveries are retried on the next cycle and unfinished leases expire server-side.
+            if args.once or stopping.is_set():
+                raise
+            failures += 1
+            print(json.dumps({"status": "bridge_retrying", "attempt": failures, "error": str(error)}), file=sys.stderr, flush=True)
         if args.once:
             return
-        stopping.wait(2)
+        if stopping.wait(min(60, 2 * 2 ** min(failures, 5)) if failures else 2):
+            return
 
 
 if __name__ == "__main__":
