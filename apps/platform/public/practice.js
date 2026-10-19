@@ -3,6 +3,8 @@ import { previewDiagram } from "./design-model.js";
 import { mountRework } from "./rework.js";
 import { openFollowups } from "./followups.js";
 import { esc } from "./ui.js";
+import { renderSourceDiff } from "./rework.js";
+import { openReplay } from "./replay.js";
 const label = (value) => value.replaceAll("_", " ");
 
 export function mountPractice(session, { api, notice, signal, onOpen }) {
@@ -91,6 +93,32 @@ export function mountPractice(session, { api, notice, signal, onOpen }) {
   };
 }
 
+// The reference is one tested approach. Showing it as a change set from the candidate's
+// own submission keeps the comparison concrete without implying the reference is the answer.
+export function renderReference(host, referenceFiles, submissionFiles) {
+  let asDiff = true;
+  const render = () => {
+    const entries = Object.entries(referenceFiles);
+    host.innerHTML = `<label class="reference-mode"><input type="checkbox" id="reference-diff" ${asDiff ? "checked" : ""}> Show as changes from my submission</label>${entries
+      .map(([path, source]) => {
+        const mine = submissionFiles[path];
+        const relation =
+          mine === undefined
+            ? " · not in your submission"
+            : mine === source
+              ? " · identical to yours"
+              : "";
+        return `<details${entries.length === 1 ? " open" : ""}><summary>${esc(path)}${asDiff ? relation : ""}</summary>${asDiff ? renderSourceDiff(mine ?? "", source, { before: "Your submission", after: "Reference" }) : `<pre>${esc(source)}</pre>`}</details>`;
+      })
+      .join("")}`;
+    host.querySelector("#reference-diff").onchange = (event) => {
+      asDiff = event.target.checked;
+      render();
+    };
+  };
+  render();
+}
+
 async function openReview(session, review, { api, notice, signal, onOpen }) {
   const dialog = document.createElement("dialog");
   dialog.className = "review-dialog";
@@ -127,6 +155,11 @@ async function openReview(session, review, { api, notice, signal, onOpen }) {
   followupButton.onclick = () =>
     openFollowups(session, { api, notice, signal });
   reviewHeader.append(followupButton);
+  const replayButton = document.createElement("button");
+  replayButton.type = "button";
+  replayButton.textContent = "Replay attempt";
+  replayButton.onclick = () => openReplay(session, { api, notice, signal });
+  reviewHeader.append(replayButton);
   const reworkHost = document.createElement("section");
   reworkHost.className = "rework-panel";
   reviewHeader.after(reworkHost);
@@ -155,14 +188,11 @@ async function openReview(session, review, { api, notice, signal, onOpen }) {
       try {
         const reference = await api(`/api/sessions/${session.id}/reference`);
         if (!dialog.isConnected || signal?.aborted) return;
-        dialog.querySelector("#reference-files").innerHTML = Object.entries(
+        renderReference(
+          dialog.querySelector("#reference-files"),
           reference.files,
-        )
-          .map(
-            ([path, source]) =>
-              `<details><summary>${esc(path)}</summary><pre>${esc(source)}</pre></details>`,
-          )
-          .join("");
+          session.files || {},
+        );
         referenceButton.hidden = true;
       } catch (error) {
         if (dialog.isConnected && !signal?.aborted) {

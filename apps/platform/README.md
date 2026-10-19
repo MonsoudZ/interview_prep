@@ -57,7 +57,7 @@ Test results show parsed failures/errors first, expected/actual values where pre
 
 Ruby has isolated code execution, visible/supplemental tests, timing, hints, submission self-review, and reference reveal. System design version 2 supports an architecture canvas, six structured notes sections, export, timing, hints, and self-review of the preserved diagram. Local Ollama feedback is integrated with a private pull worker; an actual Studio model still needs installation and benchmarking. Guided/timed rework rounds and saved comparisons are connected. The conversational coach and voice are not connected. Self-assessment is labeled explicitly; the app does not infer a hiring verdict or claim calibrated review accuracy.
 
-Practice: open an exercise in guided mode, reveal support as needed, start the session, and submit. Choose **Review submission** to record what the work demonstrates, attach source lines, save a reflection, and see suggested practice for the gaps you identify. An observed rating requires both a source reference and explanation. **Not observed** stays separate from demonstrated performance.
+Practice: open an exercise in guided mode, reveal support as needed, start the session, and submit. Choose **Review submission** to record what the work demonstrates, attach source lines, save a reflection, and see suggested practice for the gaps you identify. The review dialog can show the reference implementation as a change set from your own submission, and **Replay attempt** steps through every saved revision with the test runs and hint reveals that happened at each save. An observed rating requires both a source reference and explanation. **Not observed** stays separate from demonstrated performance.
 
 The current hosting direction is [Railway only, within the existing budget](../../docs/decisions/002-railway-only-budget.md). The [Railway Sandboxes adapter](../../services/railway_worker/README.md) now implements the existing queue/signature/callback protocol and has simulated-provider tests; actual hosted execution is not validated yet. The Linux worker below is optional. No extra paid service is required for the practice/review features.
 
@@ -103,7 +103,7 @@ A separate opt-in [live worker integration test](test/integration/live_worker_te
 
 ## API outline
 
-Browser: GET `/api/bootstrap`; POST `/api/register` or `/api/login`; DELETE `/api/logout`; GET `/api/exercises`; GET/POST `/api/sessions`; GET `/api/sessions/:id`; PUT `.../snapshot`; POST `.../prepare`, `.../start`, `.../execute`, `.../submit`.
+Browser: GET `/api/bootstrap`; POST `/api/register` or `/api/login`; DELETE `/api/logout`; GET `/api/exercises`; GET/POST `/api/sessions`; GET `/api/sessions/:id`; PUT `.../snapshot`; POST `.../prepare`, `.../start`, `.../execute`, `.../submit`; GET `.../timeline` (owner-scoped replay of saved revisions with changed paths, runs and hint reveals per save; `?revision=` adds that save's file changes).
 
 Practice: GET `.../practice`; POST `.../hint` with `expected_position` (number of hints already revealed). Assessment/submitted sessions cannot reveal new hints. GET/PUT `.../review` requires a submitted session. Review saves include `expected_version` (null for the first save), an `entries` map keyed by criterion ID, and `reflection`. Each entry contains `rating`, `notes`, and optional `evidence: {path, start_line, end_line}`; observed ratings require evidence. The server derives excerpts and binds the review to the submitted snapshot. Ratings and reflections are self-reported, not machine-verified findings.
 

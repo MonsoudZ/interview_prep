@@ -22,6 +22,7 @@ Rails.application.routes.draw do
       post :submit
       post :execute
       get :practice
+      get :timeline
       post :hint
       get :review, to: "session_reviews#show"
       get :automated_review, to: "automated_reviews#show"

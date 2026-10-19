@@ -3137,6 +3137,35 @@ dialog::backdrop {
 .comparison-file-label {
   margin: 22px 0 14px;
 }
+.replay-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 12px;
+}
+.replay-controls input[type="range"] {
+  flex: 1;
+}
+.replay-events {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-size: 12px;
+}
+.replay-events span {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #f4f7f3;
+}
+.reference-mode {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  margin: 10px 0;
+}
 .source-diff {
   border: 1px solid var(--border);
   border-radius: 6px;

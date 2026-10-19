@@ -56,6 +56,11 @@ class InterviewSessionsController < ApplicationController
     render json: PracticeContent.present(owner_session)
   end
 
+  def timeline
+    owner_session.expire!
+    render json: SessionTimeline.call(owner_session, revision: params[:revision].to_s.presence)
+  end
+
   def hint
     record = owner_session
     record.with_lock do

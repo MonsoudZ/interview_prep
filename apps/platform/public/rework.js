@@ -4,9 +4,13 @@ import { sourceDiff } from "./source-diff.js";
 import { previewDiagram } from "./design-model.js";
 
 const rating = (value) => (value || "not_observed").replaceAll("_", " ");
-export function renderSourceDiff(before, after) {
+export function renderSourceDiff(
+  before,
+  after,
+  labels = { before: "Original", after: "Rework" },
+) {
   const diff = sourceDiff(before, after);
-  return `${diff.large ? '<p class="subtitle">Large section shown as a replacement. Display is bounded; full files remain in their workspaces.</p>' : ""}<div class="source-diff" role="region" aria-label="Source changes" tabindex="0"><div class="diff-labels"><span>Original</span><span>Rework</span><span>− removed · + added</span></div>${diff.rows.map((row) => (row.kind === "omitted" ? `<div class="diff-omitted">… ${row.before} original / ${row.after} rework lines omitted</div>` : `<div class="diff-line diff-${row.kind}"><span class="diff-number">${row.oldLine ?? ""}</span><span class="diff-number">${row.newLine ?? ""}</span><code>${row.kind === "added" ? "+" : row.kind === "removed" ? "−" : " "} ${esc(row.text.length > 2000 ? row.text.slice(0, 2000) + "… [line shortened]" : row.text)}</code></div>`)).join("")}</div>`;
+  return `${diff.large ? '<p class="subtitle">Large section shown as a replacement. Display is bounded; full files remain in their workspaces.</p>' : ""}<div class="source-diff" role="region" aria-label="Source changes" tabindex="0"><div class="diff-labels"><span>${esc(labels.before)}</span><span>${esc(labels.after)}</span><span>− removed · + added</span></div>${diff.rows.map((row) => (row.kind === "omitted" ? `<div class="diff-omitted">… ${row.before} ${esc(labels.before.toLowerCase())} / ${row.after} ${esc(labels.after.toLowerCase())} lines omitted</div>` : `<div class="diff-line diff-${row.kind}"><span class="diff-number">${row.oldLine ?? ""}</span><span class="diff-number">${row.newLine ?? ""}</span><code>${row.kind === "added" ? "+" : row.kind === "removed" ? "−" : " "} ${esc(row.text.length > 2000 ? row.text.slice(0, 2000) + "… [line shortened]" : row.text)}</code></div>`)).join("")}</div>`;
 }
 
 export function renderSavedFeedback(context) {
