@@ -86,7 +86,7 @@ python3 services/local_vm/stage.py
 colima -p interview ssh -- sudo sh -c 'cat > /etc/cron.d/interview-worker-reap; chmod 0644 /etc/cron.d/interview-worker-reap; systemctl enable --now cron' < deploy/local-vm/interview-worker-reap.cron
 ```
 
-The bootstrap selects the current official gVisor release and checks its published SHA-512. Record the resulting version/hash when updating; the version listed above is what was actually tested here. Staging includes only worker Python files, the guest entry point, the image recipe/lock, the shared starter template, explicit published exercise starters/test fixtures, and `.dockerignore`. It excludes application databases, accounts, saved submissions, local secrets, logs, and reference solutions. There is no shared home-directory shortcut.
+The bootstrap installs one pinned gVisor release (20261012.0) and rejects any download whose SHA-512 differs from the digest recorded in the script and in `runtime.json`; it never takes "latest". To upgrade, run it with `GVISOR_RELEASE` and `GVISOR_SHA512` set to the new release and its published digest, verify the VM, then update the script defaults and `runtime.json` in the same commit. Staging includes only worker Python files, the guest entry point, the image recipe/lock, the shared starter template, explicit published exercise starters/test fixtures, and `.dockerignore`. It excludes application databases, accounts, saved submissions, local secrets, logs, and reference solutions. There is no shared home-directory shortcut.
 
 Build the currently pinned Ruby base inside Linux:
 
