@@ -87,7 +87,7 @@ function evidenceMarkup(stage) {
 }
 export function renderMockInterview(mock) {
   const completed = mock.status === "completed";
-  return `<header class="page-header"><div><div class="eyebrow">Mock interview</div><h1>${esc(mock.title)}</h1><p>${completed ? `Completed · ${esc(mock.completion_reason.replaceAll("_", " "))}` : `${mock.duration_seconds / 60} minutes total · ${mock.started_at ? "The overall timer is running, including transitions." : "Prepare the first workspace. The overall timer starts with its Start session button."}`}</p></div><strong id="mock-clock" class="timer"></strong></header><ol class="mock-stages">${mock.stages.map((stage) => `<li class="mock-stage ${stage.status === "current" ? "current" : ""}"><div class="section-top"><div><span class="eyebrow">${stage.kind === "followup" ? "Follow-up discussion" : "Workspace"} · ${stage.duration_seconds / 60} min</span><h2>${esc(stage.title)}</h2><p>${esc(stage.status === "pending" ? "Locked" : stage.status === "unattempted" ? "Unattempted" : stage.status === "completed" ? "Finished" : stage.session_status === "active" || stage.followup_status === "active" ? "In progress" : "Ready to continue")}${stage.exercise_version ? ` · version ${stage.exercise_version}` : ""}</p></div>${stage.session_id || stage.followup_id ? `<button data-open-stage="${stage.position}">${stage.status === "current" ? "Open stage" : "View work"}</button>` : ""}</div>${completed ? evidenceMarkup(stage) : ""}${completed && stage.transcript ? `<p>Follow-ups: ${stage.transcript.transcript.filter((q) => q.answer.status === "answered").length}/${stage.transcript.question_count} answered. Partial, skipped, and unasked questions remain recorded in the transcript.</p>` : ""}</li>`).join("")}</ol>${completed ? `<section class="mock-review"><h2>Interview review</h2>${mock.next_steps?.length ? `<h3>Next practice</h3><ul>${mock.next_steps.map((step) => `<li><strong>${esc(step.title)}</strong> · ${esc(step.basis)}<p>${esc(step.practice)}</p></li>`).join("")}</ul>` : "<p>Save your stage self-assessments to build a focused next-practice plan.</p>"}<p>${esc(mock.limitations)}</p><p>Open each stage to inspect source, review criteria, references, or the follow-up transcript. Save stage self-assessments there, then refresh this review.</p><label for="mock-reflection">What would you change in the next interview?</label><textarea id="mock-reflection" maxlength="4000" rows="5">${esc(mock.reflection)}</textarea><div class="mock-actions"><button id="save-mock-reflection">Save reflection</button><button id="export-mock">Export interview review</button><button id="refresh-mock">Refresh evidence</button></div><p id="mock-save-state" role="status"></p></section>` : `<div class="mock-actions"><button id="advance-mock" class="primary" ${!(mock.stages[mock.stage_index]?.session_status === "submitted" || mock.stages[mock.stage_index]?.followup_status === "completed") ? "disabled" : ""}>${mock.stage_index === mock.stages.length - 1 ? "Complete interview" : "Continue to next stage"}</button><button id="finish-mock" class="quiet">Finish interview early</button></div><p class="subtitle">Submit the current workspace or finish its follow-up round before continuing. Unopened stages stay locked. Finishing early freezes saved work and records remaining stages as unattempted.</p>`}`;
+  return `<header class="page-header"><div><div class="eyebrow">Mock interview</div><h1>${esc(mock.title)}</h1><p>${completed ? `${mock.archived_at ? "Archived · " : "Completed · "}${esc(mock.completion_reason.replaceAll("_", " "))}` : `${mock.duration_seconds / 60} minutes total · ${mock.started_at ? "The overall timer is running, including transitions." : "Prepare the first workspace. The overall timer starts with its Start session button."}`}</p></div><strong id="mock-clock" class="timer"></strong></header><ol class="mock-stages">${mock.stages.map((stage) => `<li class="mock-stage ${stage.status === "current" ? "current" : ""}"><div class="section-top"><div><span class="eyebrow">${stage.kind === "followup" ? "Follow-up discussion" : "Workspace"} · ${stage.duration_seconds / 60} min</span><h2>${esc(stage.title)}</h2><p>${esc(stage.status === "pending" ? "Locked" : stage.status === "unattempted" ? "Unattempted" : stage.status === "completed" ? "Finished" : stage.session_status === "active" || stage.followup_status === "active" ? "In progress" : "Ready to continue")}${stage.exercise_version ? ` · version ${stage.exercise_version}` : ""}</p></div>${stage.session_id || stage.followup_id ? `<button data-open-stage="${stage.position}">${stage.status === "current" ? "Open stage" : "View work"}</button>` : ""}</div>${completed ? evidenceMarkup(stage) : ""}${completed && stage.transcript ? `<p>Follow-ups: ${stage.transcript.transcript.filter((q) => q.answer.status === "answered").length}/${stage.transcript.question_count} answered. Partial, skipped, and unasked questions remain recorded in the transcript.</p>` : ""}</li>`).join("")}</ol>${completed ? `<section class="mock-review"><h2>Interview review</h2>${mock.next_steps?.length ? `<h3>Next practice</h3><ul>${mock.next_steps.map((step) => `<li><strong>${esc(step.title)}</strong> · ${esc(step.basis)}<p>${esc(step.practice)}</p></li>`).join("")}</ul>` : "<p>Save your stage self-assessments to build a focused next-practice plan.</p>"}<p>${esc(mock.limitations)}</p><p>Open each stage to inspect source, review criteria, references, or the follow-up transcript. Save stage self-assessments there, then refresh this review.</p><label for="mock-reflection">What would you change in the next interview?</label><textarea id="mock-reflection" maxlength="4000" rows="5">${esc(mock.reflection)}</textarea><div class="mock-actions"><button id="save-mock-reflection">Save reflection</button><button id="export-mock">Export interview review</button><button id="refresh-mock">Refresh evidence</button><button id="organize-mock" class="quiet">${mock.archived_at ? "Restore interview" : "Archive interview"}</button></div><p id="mock-save-state" role="status"></p></section>` : `<div class="mock-actions"><button id="advance-mock" class="primary" ${!(mock.stages[mock.stage_index]?.session_status === "submitted" || mock.stages[mock.stage_index]?.followup_status === "completed") ? "disabled" : ""}>${mock.stage_index === mock.stages.length - 1 ? "Complete interview" : "Continue to next stage"}</button><button id="finish-mock" class="quiet">Finish interview early</button></div><p class="subtitle">Submit the current workspace or finish its follow-up round before continuing. Unopened stages stay locked. Finishing early freezes saved work and records remaining stages as unattempted.</p>`}`;
 }
 export function mountMockInterviews({
   root,
@@ -105,6 +105,7 @@ export function mountMockInterviews({
     pending = false,
     requestIds = new Map(),
     list = null,
+    archivedView = false,
     offset = 0,
     polling = false,
     navigationEpoch = 0;
@@ -130,8 +131,22 @@ export function mountMockInterviews({
   function renderList() {
     window.history.replaceState(null, "", "#interviews");
     shell(
-      `<header class="page-header"><div><h1>Mock interviews</h1><p>A complete timed loop with practical work, architecture, and questions about your submitted solutions.</p></div></header><section class="mock-plans">${list.plans.map((plan) => `<article class="mock-stage"><h2>${esc(plan.title)}</h2><p>${plan.duration_minutes} minutes · ${plan.stages.length} stages</p><ol>${plan.stages.map((stage) => `<li>${esc(stage.title)} · ${stage.duration_minutes} min</li>`).join("")}</ol><button data-plan="${esc(plan.key)}">Set up interview</button></article>`).join("")}</section><section><h2>Saved interviews</h2>${list.interviews.length ? list.interviews.map((item) => `<article class="history-row"><div><strong>${esc(item.title)}</strong><p>${esc(item.status)} · ${new Date(item.created_at).toLocaleDateString()}</p></div><button data-mock="${item.id}">${item.status === "completed" ? "Review" : "Continue"}</button></article>`).join("") : "<p>No interviews yet.</p>"}</section><p class="subtitle">Questions are scripted from the exercise rubrics. Follow-up review and source self-assessments stay separate from reported tests. Previous exposure to an exercise can affect how representative the timed practice feels.</p>`,
+      `<header class="page-header"><div><h1>Mock interviews</h1><p>A complete timed loop with practical work, architecture, and questions about your submitted solutions.</p></div></header><section class="mock-plans">${list.plans.map((plan) => `<article class="mock-stage"><h2>${esc(plan.title)}</h2><p>${plan.duration_minutes} minutes · ${plan.stages.length} stages</p><ol>${plan.stages.map((stage) => `<li>${esc(stage.title)} · ${stage.duration_minutes} min</li>`).join("")}</ol><button data-plan="${esc(plan.key)}">Set up interview</button></article>`).join("")}</section><section><div class="section-top"><h2>${archivedView ? "Archived interviews" : "Saved interviews"}</h2><button id="toggle-mock-archives" class="quiet">${archivedView ? "Saved interviews" : "Archived interviews"}</button></div><p class="subtitle">Showing ${list.interviews.length} of ${list.total} interviews. Completed interviews can be archived together with their stages; reviews remain available.</p>${list.interviews.length ? list.interviews.map((item) => `<article class="history-row"><div><strong>${esc(item.title)}</strong><p>${item.archived_at ? "Archived" : item.status === "completed" ? "Completed" : item.status === "active" ? "In progress" : "Not started"} · ${new Date(item.created_at).toLocaleDateString()}</p></div><div class="session-row-actions"><button data-mock="${item.id}">${item.status === "completed" ? "Review" : "Continue"}</button>${item.status === "completed" ? `<button class="quiet" data-mock-archive="${item.id}" data-restore="${!!item.archived_at}">${item.archived_at ? "Restore" : "Archive"}</button>` : ""}</div></article>`).join("") : "<p>No interviews yet.</p>"}</section><p class="subtitle">Questions are scripted from the exercise rubrics. Follow-up review and source self-assessments stay separate from reported tests. Previous exposure to an exercise can affect how representative the timed practice feels.</p>`,
     );
+    root.querySelector("#toggle-mock-archives").onclick = () => {
+      archivedView = !archivedView;
+      loadList();
+    };
+    root
+      .querySelectorAll("[data-mock-archive]")
+      .forEach(
+        (button) =>
+          (button.onclick = () =>
+            organize(
+              button.dataset.mockArchive,
+              button.dataset.restore === "true",
+            ).catch(fail)),
+      );
     root.querySelectorAll("[data-plan]").forEach(
       (button) =>
         (button.onclick = async () => {
@@ -171,10 +186,38 @@ export function mountMockInterviews({
             loadInterview(button.dataset.mock).catch(fail)),
       );
   }
+  async function organize(id, restore) {
+    if (pending) return;
+    if (dirty) {
+      notice("Save your reflection before archiving this interview.");
+      return;
+    }
+    pending = true;
+    try {
+      await api(
+        `/api/mock_interviews/${id}/${restore ? "restore" : "archive"}`,
+        "POST",
+      );
+      mock = null;
+      archivedView = false;
+      await loadList();
+      notice(
+        restore
+          ? "Interview and stages restored."
+          : "Interview archived. Restore it from Archived interviews.",
+      );
+    } finally {
+      pending = false;
+    }
+  }
   async function loadList() {
     const epoch = ++navigationEpoch;
     try {
-      list = await api("/api/mock_interviews");
+      const result = await api(
+        `/api/mock_interviews${archivedView ? "?archived=true" : ""}`,
+      );
+      if (!scope.alive || epoch !== navigationEpoch) return;
+      list = result;
       if (scope.alive && epoch === navigationEpoch) renderList();
     } catch (error) {
       fail(error);
@@ -200,10 +243,15 @@ export function mountMockInterviews({
   }
   function apply(value) {
     mock = value;
+    archivedView = !!mock.archived_at;
     offset = new Date(mock.server_time).getTime() - Date.now();
     window.history.replaceState(null, "", `#interview/${mock.id}`);
     shell(renderMockInterview(mock));
     clock();
+    const organizeButton = root.querySelector("#organize-mock");
+    if (organizeButton)
+      organizeButton.onclick = () =>
+        organize(mock.id, !!mock.archived_at).catch(fail);
     root.querySelectorAll("[data-open-stage]").forEach(
       (button) =>
         (button.onclick = () => {

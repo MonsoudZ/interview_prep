@@ -4,11 +4,26 @@ class InterviewSessionsController < ApplicationController
   end
 
   def index
-    sessions = current_account.interview_sessions.includes(:exercise_version, :mock_interview_stage).order(updated_at: :desc).limit(100)
-    render json: { sessions: sessions.map { |record|
+    MockInterview.where(account: current_account).where.not(status: "completed").find_each { |mock| MockInterviewWorkflow.sync!(mock) }
+    current_account.interview_sessions.where(status: "active").where("deadline_at <= ?", Time.current).find_each(&:expire!)
+    archived = params[:archived] == "true"
+    scope = current_account.interview_sessions
+    scope = archived ? scope.where.not(archived_at: nil) : scope.where(archived_at: nil)
+    sessions = scope.includes(:exercise_version, :mock_interview_stage).order(updated_at: :desc, id: :desc).limit(100)
+    render json: { total: scope.count, limit: 100, archived: archived,
+      summary: { ongoing: scope.where.not(status: "submitted").count, submitted: scope.where(status: "submitted").count }, sessions: sessions.map { |record|
       { id: record.id, title: record.exercise_version.title, track: record.exercise_version.track,
-        mode: record.mode, status: record.status, updated_at: record.updated_at, revision_of_id: record.revision_of_id, mock_interview_id: record.mock_interview_stage&.mock_interview_id }
+        mode: record.mode, status: record.status, archived_at: record.archived_at,
+        updated_at: record.updated_at, submitted_at: record.submitted_at, revision_of_id: record.revision_of_id, mock_interview_id: record.mock_interview_stage&.mock_interview_id }
     } }
+  end
+
+  def archive
+    render json: SessionPresenter.call(SessionOrganization.archive_session!(owner_session))
+  end
+
+  def restore
+    render json: SessionPresenter.call(SessionOrganization.archive_session!(owner_session, restore: true))
   end
 
   def create

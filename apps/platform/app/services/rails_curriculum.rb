@@ -8,6 +8,15 @@ class RailsCurriculum
     entries.find { |entry| entry.fetch("slug") == slug && entry.fetch("version") == version }
   end
 
+  def self.initial_path(exercise)
+    find(exercise.slug, exercise.version)&.fetch("entry_file", nil) || {
+      "tenant-projects" => "app/controllers/projects_controller.rb",
+      "idempotent-checkout" => "app/controllers/orders_controller.rb",
+      "delivery-retries" => "app/jobs/delivery_job.rb",
+      "activity-feed" => "app/controllers/feed_controller.rb"
+    }[exercise.slug]
+  end
+
   ORDER = %w[repository-events tenant-projects idempotent-checkout delivery-retries activity-feed support-escalations invoice-amendments safe-backfill].freeze
 
   def self.reference(exercise)

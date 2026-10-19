@@ -7,6 +7,11 @@ import {
   statusName,
   renderBrief,
 } from "./ui.js";
+import {
+  dashboardHash,
+  filterSessions,
+  renderSessionRows,
+} from "./session-list.js";
 import { createRequestScope } from "./request-scope.js";
 import { renderProgress, renderProgressPeek } from "./progress.js";
 export function createDashboard({
@@ -30,6 +35,13 @@ export function createDashboard({
     filter = "all",
     catalog = [],
     history = [],
+    archivedHistory = null,
+    historyStatus = "all",
+    historyKind = "all",
+    historyQuery = "",
+    historyLoading = false,
+    sessionTotal = 0,
+    historySummary = null,
     progress = null,
     progressError = "",
     progressLoading = false;
@@ -37,7 +49,7 @@ export function createDashboard({
     window.history.replaceState(
       null,
       "",
-      location.pathname + (page === "progress" ? "#progress" : ""),
+      location.pathname + dashboardHash(page),
     );
     const [exercises, sessions, overview] = await Promise.all([
       api("/api/exercises"),
@@ -50,6 +62,8 @@ export function createDashboard({
     if (!scope.alive) return;
     catalog = exercises.exercises;
     history = sessions.sessions;
+    sessionTotal = sessions.total;
+    historySummary = sessions.summary;
     progress = overview;
     renderDashboard();
   }
@@ -70,7 +84,7 @@ export function createDashboard({
           : page === "progress"
             ? "Progress"
             : "Sessions";
-    const heading = `<header class="page-header"><div><h1>${pageTitle}</h1><p>${page === "home" ? "Rails, Ruby, and system design." : page === "library" ? "Choose an exercise, then practice with hints or a timer." : page === "progress" ? "A focused practice plan, grounded in your own reviews." : "Your saved attempts and submissions."}</p></div>${page === "home" ? `<span class="practice-summary">${ongoing.length} in progress<span>·</span>${submitted.length} submitted</span>` : page === "progress" ? `<button id="refresh-progress" class="quiet" ${progressLoading ? "disabled" : ""}>${progressLoading ? "Refreshing…" : "Refresh"}</button>` : ""}</header>`;
+    const heading = `<header class="page-header"><div><h1>${pageTitle}</h1><p>${page === "home" ? "Rails, Ruby, and system design." : page === "library" ? "Choose an exercise, then practice with hints or a timer." : page === "progress" ? "A focused practice plan, grounded in your own reviews." : "Your saved attempts and submissions."}</p></div>${page === "home" ? `<span class="practice-summary">${historySummary?.ongoing ?? ongoing.length} in progress<span>·</span>${historySummary?.submitted ?? submitted.length} submitted</span>` : page === "progress" ? `<button id="refresh-progress" class="quiet" ${progressLoading ? "disabled" : ""}>${progressLoading ? "Refreshing…" : "Refresh"}</button>` : ""}</header>`;
     const library = `<section class="exercise-section" aria-label="Practice exercises"><div class="section-top">${page === "home" ? "<h2>Exercises</h2>" : "<span></span>"}<span class="count-label">${displayed.length} available</span></div><div class="filter" role="group" aria-label="Filter exercises">${[
       ["all", "All"],
       ["rails", "Rails"],
@@ -96,7 +110,33 @@ export function createDashboard({
           ? renderProgress(progress, filter)
           : `<section class="progress-empty" role="alert"><h2>Progress could not be loaded</h2><p>${esc(progressError)}</p><button id="retry-progress">Try again</button></section>`
         : page === "history"
-          ? historyRows(history)
+          ? `<section aria-label="Session history"><div class="session-filters"><div class="filter" role="group" aria-label="Session status">${[
+              ["all", "All"],
+              ["ongoing", "In progress"],
+              ["submitted", "Submitted"],
+              ["archived", "Archived"],
+            ]
+              .map(
+                ([key, label]) =>
+                  `<button data-history-status="${key}" aria-pressed="${historyStatus === key}" class="${historyStatus === key ? "active" : ""}">${label}</button>`,
+              )
+              .join(
+                "",
+              )}</div><div class="session-search"><label>Search sessions<input id="session-search" type="search" value="${esc(historyQuery)}" placeholder="Search this list"></label><label>Practice type<select id="session-kind">${[
+              ["all", "All types"],
+              ["rails", "Rails"],
+              ["ruby", "Ruby"],
+              ["system_design", "System design"],
+              ["rework", "Reworks"],
+              ["mock", "Interview stages"],
+            ]
+              .map(
+                ([key, label]) =>
+                  `<option value="${key}" ${historyKind === key ? "selected" : ""}>${label}</option>`,
+              )
+              .join(
+                "",
+              )}</select></label></div></div><p class="subtitle">${historyStatus === "archived" ? "Archived work stays available. Restore standalone sessions here, or restore interview stages together from Mock interviews. Reviews and progress are preserved." : `Latest ${history.length} of ${sessionTotal} sessions. Archive completed standalone work here; archive interview stages together from Mock interviews.`}</p><div id="session-history-results">${historyLoading ? '<p role="status">Loading archived sessions…</p>' : historyRows(filteredHistory(), true)}</div></section>`
           : `${page === "home" ? continueSection + renderProgressPeek(progress) : ""}${library}${page === "home" ? recentSection : ""}`;
     root.innerHTML = `<div class="shell"><aside class="sidebar">${brand()}<nav class="nav" aria-label="Main navigation">${[
       ["home", "Practice"],
@@ -111,7 +151,7 @@ export function createDashboard({
       .join(
         "",
       )}<button id="mock-interviews">${icon("history")}Mock interviews</button></nav><div class="profile"><span class="avatar">${esc(account.name.slice(0, 1).toUpperCase())}</span><div><strong>${esc(account.name)}</strong><span>Personal account</span></div><button class="quiet" id="logout" aria-label="Sign out" title="Sign out">↪</button></div></aside><main class="main">${heading}${content}</main></div>`;
-    root.querySelector("#mock-interviews").onclick = onMocks;
+    root.querySelector("#mock-interviews").onclick = () => onMocks();
     root.querySelectorAll("[data-page]").forEach(
       (button) =>
         (button.onclick = () => {
@@ -120,7 +160,7 @@ export function createDashboard({
           window.history.replaceState(
             null,
             "",
-            location.pathname + (page === "progress" ? "#progress" : ""),
+            location.pathname + dashboardHash(page),
           );
           renderDashboard();
           window.scrollTo(0, 0);
@@ -139,15 +179,38 @@ export function createDashboard({
       .forEach(
         (button) => (button.onclick = () => openBrief(button.dataset.exercise)),
       );
-    root
-      .querySelectorAll("[data-session]")
-      .forEach(
-        (button) =>
-          (button.onclick = () =>
-            onOpenSession(button.dataset.session, { returnPage: page }).catch(
-              (error) => notice(error.message),
-            )),
-      );
+    bindSessionRows(root);
+    root.querySelectorAll("[data-history-status]").forEach(
+      (button) =>
+        (button.onclick = async () => {
+          historyStatus = button.dataset.historyStatus;
+          if (historyStatus === "archived" && archivedHistory === null) {
+            historyLoading = true;
+            renderDashboard();
+            try {
+              archivedHistory = (await api("/api/sessions?archived=true"))
+                .sessions;
+            } catch (error) {
+              notice(error.message);
+            } finally {
+              historyLoading = false;
+              if (scope.alive) renderDashboard();
+            }
+          } else renderDashboard();
+        }),
+    );
+    const search = root.querySelector("#session-search");
+    if (search)
+      search.oninput = () => {
+        historyQuery = search.value;
+        updateHistoryResults();
+      };
+    const kind = root.querySelector("#session-kind");
+    if (kind)
+      kind.onchange = () => {
+        historyKind = kind.value;
+        updateHistoryResults();
+      };
     root.querySelectorAll("[data-progress-session]").forEach((button) => {
       button.onclick = () =>
         onOpenSession(button.dataset.progressSession, {
@@ -176,6 +239,11 @@ export function createDashboard({
     }
     document.querySelector("#view-history")?.addEventListener("click", () => {
       page = "history";
+      window.history.replaceState(
+        null,
+        "",
+        location.pathname + dashboardHash(page),
+      );
       renderDashboard();
       window.scrollTo(0, 0);
     });
@@ -188,10 +256,73 @@ export function createDashboard({
       }
     };
   }
-  function historyRows(rows) {
-    return rows.length
-      ? `<div class="history">${rows.map((s) => `<div class="history-row"><div class="history-info"><strong>${esc(s.title)}</strong><p>${modeName(s.mode)}${s.revision_of_id ? " · rework" : ""}${s.mock_interview_id ? " · mock interview" : ""}<span>·</span>${new Date(s.updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</p></div><span class="session-badge status-${esc(s.status)}">${statusName(s.status)}</span><button class="quiet" data-session="${s.id}">${s.status === "submitted" ? "View" : "Continue"} ${icon("arrow")}</button></div>`).join("")}</div>`
-      : `<div class="empty"><h3>No sessions yet</h3><p>Open an exercise to start your first attempt.</p><button data-page="library">Browse exercises</button></div>`;
+  function filteredHistory() {
+    return filterSessions(
+      historyStatus === "archived" ? archivedHistory || [] : history,
+      { status: historyStatus, kind: historyKind, query: historyQuery },
+    );
+  }
+  function historyRows(rows, organize = false) {
+    return renderSessionRows(rows, {
+      organize,
+      empty:
+        page === "history"
+          ? "No sessions match this view."
+          : "No sessions yet. Open an exercise to begin.",
+    });
+  }
+  function updateHistoryResults() {
+    const host = root.querySelector("#session-history-results");
+    if (host) {
+      host.innerHTML = historyRows(filteredHistory(), true);
+      bindSessionRows(host);
+    }
+  }
+  function bindSessionRows(host) {
+    host
+      .querySelectorAll("[data-open-interview]")
+      .forEach(
+        (button) =>
+          (button.onclick = () => onMocks(button.dataset.openInterview)),
+      );
+    host
+      .querySelectorAll("[data-session]")
+      .forEach(
+        (button) =>
+          (button.onclick = () =>
+            onOpenSession(button.dataset.session, { returnPage: page }).catch(
+              (error) => notice(error.message),
+            )),
+      );
+    host.querySelectorAll("[data-organize-session]").forEach(
+      (button) =>
+        (button.onclick = async () => {
+          button.disabled = true;
+          try {
+            await api(
+              `/api/sessions/${button.dataset.organizeSession}/${button.dataset.restore === "true" ? "restore" : "archive"}`,
+              "POST",
+            );
+            const [current, archived] = await Promise.all([
+              api("/api/sessions"),
+              api("/api/sessions?archived=true"),
+            ]);
+            history = current.sessions;
+            sessionTotal = current.total;
+            historySummary = current.summary;
+            archivedHistory = archived.sessions;
+            renderDashboard();
+            notice(
+              button.dataset.restore === "true"
+                ? "Session restored."
+                : "Session archived. You can restore it from Archived.",
+            );
+          } catch (error) {
+            notice(error.message);
+            if (scope.alive) button.disabled = false;
+          }
+        }),
+    );
   }
   async function refreshProgress() {
     if (progressLoading) return;

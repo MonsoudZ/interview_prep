@@ -40,7 +40,11 @@ export function sessionPolicy(
         ? "Develop the architecture and reasoning. Submit when finished."
         : "Run tests as you work. Submit when finished.";
     if (session.status === "ready")
-      return "Environment ready. Start the session when you’re ready to work.";
+      return session.mode === "assessment" &&
+        session.executable &&
+        !session.worker_available
+        ? "Environment prepared. Reconnect the worker before starting the timer."
+        : "Environment ready. Start the session when you’re ready to work.";
     if (!session.executable)
       return session.track === "system_design"
         ? "Read the brief, then start your design session."
@@ -77,7 +81,7 @@ export function sessionPolicy(
         !beforeStart ||
         (session.mode === "assessment" &&
           session.executable &&
-          session.status !== "ready"),
+          (session.status !== "ready" || !session.worker_available)),
     },
     run: {
       hidden: !session.executable || submitted,
@@ -105,7 +109,10 @@ export function sessionPolicy(
       ? session.worker_available
         ? "Worker connected"
         : "Worker offline · Test runs will wait in the queue."
-      : "Writing workspace · Execution and AI tools upcoming",
+      : session.track === "system_design"
+        ? "Architecture and notes · Review available after submission"
+        : "Writing workspace · Saved source and submission review",
+    lockedBeforeStart,
     newFileHidden: submitted || lockedBeforeStart || session.track !== "rails",
   };
 }

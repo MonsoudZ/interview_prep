@@ -51,6 +51,9 @@ export function createDesignEditor(
     );
     canvas.innerHTML = diagramContents(document, selected);
     $("#diagram-empty").hidden = document.nodes.length > 0;
+    $("#diagram-empty").innerHTML = readOnly
+      ? "No components in this saved design.<br>The diagram is read-only; its notes remain available."
+      : "Start with one component.<br>Add a service, queue, database, or client, then connect the flow.";
     $("#diagram-status").textContent =
       `${document.nodes.length}/50 components · ${document.edges.length}/100 connections${readOnly ? " · read-only" : ""}`;
   }
@@ -72,7 +75,7 @@ export function createDesignEditor(
       .querySelectorAll("input,textarea,button")
       .forEach((control) => (control.disabled = readOnly));
     $("#notes-status").textContent = readOnly
-      ? "Preserved submission / read-only"
+      ? "Read-only design"
       : "Autosaves with architecture";
   }
   function connectionOptions() {

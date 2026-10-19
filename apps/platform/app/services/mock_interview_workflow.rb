@@ -241,7 +241,7 @@ class MockInterviewWorkflow
         []
       end
     end
-    { next_steps: next_steps, id: mock.id, title: mock.title, plan_key: mock.plan_key, status: mock.status, stage_index: mock.stage_index,
+    { next_steps: next_steps, id: mock.id, archived_at: mock.archived_at, title: mock.title, plan_key: mock.plan_key, status: mock.status, stage_index: mock.stage_index,
       version: mock.lock_version, started_at: mock.started_at, deadline_at: mock.deadline_at, completed_at: mock.completed_at,
       completion_reason: mock.completion_reason, reflection: mock.reflection, server_time: Time.current,
       duration_seconds: mock.mock_interview_stages.sum(:duration_seconds), stages: stages,

@@ -3,6 +3,7 @@ class FollowupWorkflow
 
   def self.create!(account, session, request_id, mode)
     raise ActiveRecord::RecordNotFound unless session.account_id == account.id
+    raise SessionCommandError, "Restore this session before starting a new follow-up round" if session.archived_at
     unless request_id.is_a?(String) && request_id.match?(/\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/)
       raise Workspace::Invalid, "Invalid follow-up request identity"
     end
@@ -12,6 +13,7 @@ class FollowupWorkflow
     end
     account.with_lock do
       session.with_lock do
+        raise SessionCommandError, "Restore this session before starting a new follow-up round" if session.archived_at
         session.expire_locked!
         raise SessionCommandError, "Submit your work before opening a follow-up round" unless session.status == "submitted"
         expire_scope!(FollowupRound.joins(:interview_session).where(interview_sessions: { account_id: account.id }))
@@ -44,7 +46,7 @@ class FollowupWorkflow
   end
 
   def self.recent_for(account_id)
-    FollowupRound.joins(:interview_session).where(interview_sessions: { account_id: account_id })
+    FollowupRound.joins(:interview_session).where(interview_sessions: { account_id: account_id, archived_at: nil })
       .includes(interview_session: :exercise_version).order(updated_at: :desc, id: :desc).limit(10).map do |round|
         session = round.interview_session
         { id: round.id, session_id: session.id, track: session.exercise_version.track, title: session.exercise_version.title,

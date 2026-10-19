@@ -482,7 +482,10 @@ export function mountWorkspace({
     }
     root.querySelector(".files-help").innerHTML = policy.submitted
       ? "Submitted snapshot.<br>Preserved as read-only."
-      : "Autosave is on.<br>⌘ / Ctrl + S to save.";
+      : policy.lockedBeforeStart
+        ? "Start this stage<br>to edit your solution."
+        : "Autosave is on.<br>⌘ / Ctrl + S to save.";
+    if (policy.lockedBeforeStart && !dirty) setSaveState("Start stage to edit");
     if (policy.submitted && !dirty) setSaveState("Read-only submission");
     root.querySelector("#new-file").hidden = policy.newFileHidden;
     const executions = root.querySelector("#executions");

@@ -4,6 +4,7 @@ import { createDashboard } from "./dashboard.js";
 import { mountWorkspace } from "./workspace.js";
 import { createRequestScope } from "./request-scope.js";
 import { mountMockInterviews } from "./mock-interviews.js";
+import { dashboardPage } from "./session-list.js";
 import { notice } from "./ui.js";
 
 const root = document.querySelector("#app"),
@@ -37,9 +38,7 @@ function showAuth() {
     }),
   );
 }
-async function showDashboard(
-  initialPage = location.hash === "#progress" ? "progress" : "home",
-) {
+async function showDashboard(initialPage = dashboardPage(location.hash)) {
   replaceScreen(() =>
     createDashboard({
       root,
@@ -48,7 +47,7 @@ async function showDashboard(
       initialPage,
       notice,
       onSession: showWorkspace,
-      onMocks: () => showMocks(),
+      onMocks: (id) => showMocks(id),
       onOpenSession: openSession,
       onSignedOut: () => {
         account = null;

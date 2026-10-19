@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_18_000005) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_18_000006) do
   create_table "accounts", id: :string, force: :cascade do |t|
     t.string "name", null: false
     t.string "email", null: false
@@ -132,6 +132,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_18_000005) do
     t.string "revision_of_id"
     t.string "rework_request_id"
     t.json "revision_context"
+    t.datetime "archived_at"
+    t.index ["account_id", "archived_at", "updated_at"], name: "idx_on_account_id_archived_at_updated_at_d6fbbe1791"
     t.index ["account_id"], name: "index_interview_sessions_on_account_id"
     t.index ["exercise_version_id"], name: "index_interview_sessions_on_exercise_version_id"
     t.index ["revision_of_id", "rework_request_id"], name: "rework_request_identity", unique: true
@@ -172,6 +174,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_18_000005) do
     t.integer "lock_version", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "archived_at"
+    t.index ["account_id", "archived_at", "created_at"], name: "idx_on_account_id_archived_at_created_at_c2e487f989"
     t.index ["account_id", "client_request_id"], name: "index_mock_interviews_on_account_id_and_client_request_id", unique: true
     t.index ["account_id"], name: "index_mock_interviews_on_account_id"
   end

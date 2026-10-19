@@ -59,7 +59,7 @@ export function workspaceMarkup(session) {
     <div id="test-details">
     <div class="result-message">Run tests to see results for your saved code.</div>
     </div>
-    <pre id="output" hidden>${session.executable ? "Your test results will appear here.\nPrepare the environment, then run your saved code." : "Your writing saves automatically.\nExecution tools for this track are coming soon."}</pre>
+    <pre id="output" hidden>${session.executable ? "Your test results will appear here.\nPrepare the environment, then run your saved code." : "Your writing saves automatically.\nSubmit your reasoning to open its review."}</pre>
     </section>
     </section>
     <div class="resize-handle resize-brief" data-resize="brief" role="separator" aria-label="Resize exercise brief" aria-orientation="vertical" aria-valuemin="260" aria-valuemax="520" tabindex="0">
@@ -73,9 +73,10 @@ export function workspaceMarkup(session) {
     <section class="brief-panel" id="panel-brief" role="tabpanel" aria-labelledby="tab-brief">
     <div class="eyebrow">Exercise · version ${session.exercise_version}</div>
     <h3>${esc(session.title)}</h3>
+    ${session.archived_at ? '<section class="practice-focus"><h4>Archived session</h4><p>Your submission and review remain available. Restore this session from Sessions → Archived, or restore its complete mock interview.</p></section>' : ""}
     ${session.revision_of_id ? `<section class="rework-context" aria-label="Rework context"><h4>Revision practice</h4><p><strong>Your goal:</strong> ${esc(session.revision_context.goal)}</p><p class="subtitle">Working from an earlier submission of the same exercise version.</p><button id="compare-rework">Compare saved changes</button><button id="open-original" class="quiet">Original submission →</button><details><summary>Feedback from the original</summary>${renderSavedFeedback(session.revision_context)}</details></section>` : ""}
     ${session.practice_focus ? `<section class="practice-focus" aria-label="Practice focus"><h4>Your practice focus</h4><strong>${esc(session.practice_focus.title)}</strong><p>${esc(session.practice_focus.practice)}</p><p class="subtitle">Based on your earlier self-assessment. Submit and review this attempt to reassess the gap.</p></section>` : ""}
-    ${session.mock_interview_id ? `<section class="practice-focus"><h4>Part of a mock interview · ${session.duration_minutes} minutes</h4><p>The stage and overall deadlines keep running while you navigate. After submitting, use “Interview” at the top to continue to the next stage. The brief may include pacing suggestions for the standalone exercise.</p></section>` : ""}
+    ${session.mock_interview_id ? `<section class="practice-focus"><h4>Part of a mock interview · ${session.duration_minutes} minutes</h4><p>${session.status === "submitted" ? "This stage is read-only. Use Interview at the top to continue the interview or open its overall review." : "Start this stage to edit. Once the interview has started, its overall deadline continues while you navigate."} The brief may include pacing suggestions for the standalone exercise.</p></section>` : ""}
     <div class="session-setup">
     <p id="session-state">
     </p>

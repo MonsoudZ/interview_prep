@@ -50,7 +50,7 @@ class ProgressOverview
         exercise_version: session.exercise_version.version, mode: session.mode, submitted_at: session.submitted_at,
         observed: observed, total: criteria.length, review_updated_at: review&.updated_at,
         reflection: review&.reflection.to_s, hints_revealed: session.hint_reveals.length, practice_focus: session.practice_focus,
-        revision_of_id: session.revision_of_id, mock_interview_id: session.mock_interview_stage&.mock_interview_id }
+        archived_at: session.archived_at, revision_of_id: session.revision_of_id, mock_interview_id: session.mock_interview_stage&.mock_interview_id }
     end
     skills = groups.values.filter_map do |group|
       observations = group[:observations] # Newest submission first; editing an old review does not reorder attempts.
@@ -81,7 +81,8 @@ class ProgressOverview
     gaps = skills.select { |item| item[:open_gap] && !item[:historical] }.sort_by do |item|
       [item[:recurring] ? 0 : 1, -item[:gap_count], OBSERVED.index(item[:latest][:rating]), -item[:latest][:submitted_at].to_i, item[:key]]
     end
-    recent = attempts.first(20)
+    visible_attempts = attempts.reject { |attempt| attempt[:archived_at] }
+    recent = visible_attempts.first(20)
     runs = ExecutionRequest.joins(:source_snapshot, :interview_session).where(interview_session_id: recent.map { |attempt| attempt[:id] }, purpose: "tests")
       .where("source_snapshots.revision = interview_sessions.submitted_revision").order(created_at: :desc, id: :desc).to_a.group_by(&:interview_session_id)
     recent.each do |attempt|
@@ -90,11 +91,11 @@ class ProgressOverview
         output_truncated: run.result&.fetch("output_truncated", false) || false }
     end
     { summary: { submitted: submitted.length, self_reviews_started: attempts.count { |attempt| attempt[:observed] > 0 },
-        awaiting_review: attempts.count { |attempt| attempt[:total] > attempt[:observed] }, open_gaps: gaps.length,
+        awaiting_review: visible_attempts.count { |attempt| attempt[:total] > attempt[:observed] }, open_gaps: gaps.length,
         recurring_gaps: gaps.count { |item| item[:recurring] } },
       plan: gaps, skills: skills.sort_by { |item| [item[:track], item[:exercise], item[:title]] },
-      awaiting_review: attempts.select { |attempt| attempt[:total] > attempt[:observed] },
+      awaiting_review: visible_attempts.select { |attempt| attempt[:total] > attempt[:observed] },
       recent_attempts: recent, recent_limit: 20, followups: FollowupWorkflow.recent_for(@account_id),
-      method: "Self-assessments only. One observation per criterion per submission; revisions of a saved review replace that observation. Comparisons stay within the same exercise and rubric version. Once you assess a current rubric, older rubrics remain in history and leave the active plan without being marked resolved. Reworks and mock interview stages appear in history and the review queue, but do not change starter-attempt trends or close their gaps. Tests and model feedback do not determine these ratings." }
+      method: "Self-assessments only. One observation per criterion per submission; revisions of a saved review replace that observation. Comparisons stay within the same exercise and rubric version. Once you assess a current rubric, older rubrics remain in history and leave the active plan without being marked resolved. Reworks and mock interview stages appear in history and the review queue, but do not change starter-attempt trends or close their gaps. Archived work retains its ratings and progress, but leaves recent attempts and the review queue. Tests and model feedback do not determine these ratings." }
   end
 end

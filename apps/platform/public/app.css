@@ -3361,3 +3361,82 @@ dialog::backdrop {
     margin-top: 16px;
   }
 }
+
+.session-filters {
+  margin: 0 0 20px;
+}
+.session-search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+}
+.session-search label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+.session-search input,
+.session-search select {
+  min-height: 38px;
+  padding: 8px 10px;
+  font: inherit;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface, white);
+}
+.session-search input {
+  width: 260px;
+  max-width: 100%;
+}
+.session-row-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.history-row {
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .session-search,
+  .session-search label {
+    width: 100%;
+  }
+  .session-search input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .session-filters .filter {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 600px) {
+  .history .history-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 12px;
+  }
+  .history .history-info {
+    grid-column: 1 / -1;
+  }
+  .history .history-info strong {
+    white-space: normal;
+    overflow: visible;
+    font-size: 14px;
+  }
+  .history .history-info p {
+    font-size: 12px;
+  }
+  .history .session-badge {
+    justify-self: start;
+    font-size: 11px;
+  }
+  .history .session-row-actions {
+    justify-content: flex-end;
+  }
+  .history .session-row-actions button {
+    min-height: 40px;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}

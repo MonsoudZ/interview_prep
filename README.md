@@ -26,6 +26,7 @@ Clone the source with `git clone https://github.com/MonsoudZ/interview_prep.git`
 - [Revision practice and saved source comparisons](docs/revision-practice.md)
 - [Follow-up interview rounds and transcripts](docs/follow-up-practice.md)
 - [Complete mock interviews and consolidated reviews](docs/mock-interviews.md)
+- [Session organization, archiving and restore](docs/session-management.md)
 
 The product includes practical Rails assessments, Ruby coding challenges, and system design interviews. The planned full product includes learning, independent practice, voice/text interviews, evidence-based reviews, and revisions. Current implemented behavior is described below.
 

@@ -21,7 +21,7 @@ class ExerciseCatalog
     if exercise.slug == "webhook-delivery" && exercise.version == 2
       return CONTENT.fetch("webhook-delivery").merge(brief: exercise.brief,
         tools: ["Architecture canvas", "Structured design notes", "SVG / Markdown export", "Guided hints", "Submission self-review"],
-        limitation: "Voice, conversational interviewing, and automated design review are not available yet.",
+        limitation: "Voice and live conversational interviews are not connected. Optional local-model review requires an available Studio reviewer.",
         difficulty_note: "Editorial practice level, not a calibrated interview score.")
     end
     if exercise.slug == "merge-intervals" && exercise.version == 2
