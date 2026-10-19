@@ -45,6 +45,9 @@ def run(slug, reference=False, mutation=None, prepare=False):
                               cwd=workspace, env=env, timeout=40)
 
 MUTATIONS = {
+ "support-escalations": [("app/controllers/escalations_controller.rb", "organization_id: agent.organization_id", "organization_id: [7, 8]"), ("app/controllers/escalations_controller.rb", 'agent.role == "supervisor"', "true")],
+ "invoice-amendments": [("app/controllers/invoices_controller.rb", "version: version + 1", "version: version + 2"), ("db/schema.rb", "add_index :invoice_amendments, [:invoice_id, :version], unique: true", "# no unique index")],
+ "safe-backfill": [("app/services/customer_email_backfill.rb", "normalized_email: nil, email: row.email", "normalized_email: nil"), ("app/services/customer_email_backfill.rb", ".limit(batch_size)", "")],
  "tenant-projects": [
   ("app/controllers/projects_controller.rb", "Project.where(organization_id: @user.organization_id)", "Project.all"),
   ("app/controllers/projects_controller.rb", 'unless @user.role == "editor"', 'unless true'),
@@ -66,10 +69,13 @@ MUTATIONS = {
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mutations", action="store_true")
+    parser.add_argument("--exercise", action="append", help="Validate only these published exercise slugs")
     args = parser.parse_args()
     report = []
     for manifest in sorted(CURRICULUM.glob("*/exercise.json")):
         slug = manifest.parent.name
+        if args.exercise and slug not in args.exercise:
+            continue
         for label, reference, prepare in [("prepare", False, True), ("starter", False, False), ("reference", True, False)]:
             result = run(slug, reference=reference, prepare=prepare)
             summary = re.search(r"\d+ runs, \d+ assertions, \d+ failures, \d+ errors, \d+ skips", result.stdout)
@@ -82,7 +88,7 @@ def main():
             item = {"exercise": slug, "variant": label, "summary": summary[0] if summary else "READY"}
             report.append(item); print(json.dumps(item), flush=True)
         if args.mutations:
-            for mutation in MUTATIONS[slug]:
+            for mutation in MUTATIONS.get(slug, []):
                 result = run(slug, reference=True, mutation=mutation)
                 assert result.returncode != 0, f"Surviving mutation: {slug} {mutation}"
                 # Reject mutants caught only by load/syntax errors, rather than behavior checks.
@@ -92,6 +98,8 @@ def main():
                     raise RuntimeError(f"Mutation did not produce a behavioral failure: {slug} {mutation}")
                 item = {"exercise": slug, "variant": "mutation", "defect": mutation[1], "summary": summary[0]}
                 report.append(item); print(json.dumps(item), flush=True)
+    if args.exercise:
+        return
     (CURRICULUM / "validation.json").write_text(json.dumps(report, indent=2) + "\n")
 
 if __name__ == "__main__":

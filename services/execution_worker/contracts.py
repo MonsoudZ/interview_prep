@@ -15,7 +15,7 @@ MAX_LIFETIME_SECONDS = 180
 OPERATIONS = {"rails.events.v1": ["ruby", "/opt/runner/run.rb"],
               "rails.events.prepare.v1": ["ruby", "/opt/runner/run.rb", "--prepare"]}
 
-for scenario in ("tenant-projects", "idempotent-checkout", "delivery-retries", "activity-feed"):
+for scenario in ("tenant-projects", "idempotent-checkout", "delivery-retries", "activity-feed", "support-escalations", "invoice-amendments", "safe-backfill"):
     OPERATIONS[f"rails.{scenario}.v1"] = ["ruby", "/opt/runner/run.rb", "--exercise", scenario]
     OPERATIONS[f"rails.{scenario}.prepare.v1"] = ["ruby", "/opt/runner/run.rb", "--exercise", scenario, "--prepare"]
 

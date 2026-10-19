@@ -1,0 +1,15 @@
+{
+  "slug": "support-escalations",
+  "title": "Repair Support Escalations",
+  "version": 1,
+  "operation": "rails.support-escalations.v1",
+  "duration_minutes": 55,
+  "summary": "Repair an existing escalation endpoint: enforce role and tenant boundaries, valid state transitions, exact audit records, and atomic failure handling.",
+  "skills": [
+    "Debugging",
+    "Authorization",
+    "Transactions"
+  ],
+  "difficulty": "Senior \u00b7 production changes",
+  "entry_file": "app/controllers/escalations_controller.rb"
+}

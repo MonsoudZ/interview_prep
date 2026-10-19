@@ -3,6 +3,7 @@ import { mountAuth } from "./auth.js";
 import { createDashboard } from "./dashboard.js";
 import { mountWorkspace } from "./workspace.js";
 import { createRequestScope } from "./request-scope.js";
+import { mountMockInterviews } from "./mock-interviews.js";
 import { notice } from "./ui.js";
 
 const root = document.querySelector("#app"),
@@ -47,6 +48,7 @@ async function showDashboard(
       initialPage,
       notice,
       onSession: showWorkspace,
+      onMocks: () => showMocks(),
       onOpenSession: openSession,
       onSignedOut: () => {
         account = null;
@@ -73,13 +75,29 @@ function showWorkspace(session, options = {}) {
       account,
       api,
       notice,
-      onBack: () => showDashboard(options.returnPage || "home"),
+      onBack: () =>
+        session.mock_interview_id
+          ? showMocks(session.mock_interview_id)
+          : showDashboard(options.returnPage || "home"),
       reviewOnOpen: options.reviewOnOpen,
       followupRoundId: options.followupRoundId,
       onOpenSession: (id, extra = {}) =>
         openSession(id, { returnPage: options.returnPage || "home", ...extra }),
     }),
   );
+}
+async function showMocks(id) {
+  replaceScreen(() =>
+    mountMockInterviews({
+      root,
+      api,
+      notice,
+      initialId: id,
+      onBack: () => showDashboard(),
+      onOpenSession: openSession,
+    }),
+  );
+  await screen.load();
 }
 async function openSession(id, options = {}) {
   navigation?.destroy();
@@ -109,7 +127,10 @@ try {
     const match = location.hash.match(
       /^#session\/([0-9a-f-]{36})(?:\/followup\/([0-9a-f-]{36}))?$/,
     );
-    if (match) await openSession(match[1], { followupRoundId: match[2] });
+    const mockMatch = location.hash.match(/^#interview\/([0-9a-f-]{36})$/);
+    if (mockMatch) await showMocks(mockMatch[1]);
+    else if (location.hash === "#interviews") await showMocks();
+    else if (match) await openSession(match[1], { followupRoundId: match[2] });
     else await showDashboard();
   } else showAuth();
 } catch (error) {

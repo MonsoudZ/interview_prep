@@ -27,7 +27,7 @@ class LiveWorkerTest < ActionDispatch::IntegrationTest
   def worker_post(path, params)
     post path, params: params, as: :json,
       headers: { "Authorization" => "Bearer #{ENV.fetch('INTERVIEW_WORKER_BRIDGE_KEY')}" }
-    assert_response :ok
+    assert_response :ok, "#{path}: #{response.body}"
     data
   end
 
@@ -49,6 +49,8 @@ class LiveWorkerTest < ActionDispatch::IntegrationTest
       assert status.success?, "Real worker rejected execution: #{stderr}"
       output = JSON.parse(stdout)
     end
+    assert_equal leased.fetch("job").fetch("payload").fetch("job_id"), output.fetch("job_id")
+    assert ExecutionRequest.exists?(output.fetch("job_id")), "Leased execution disappeared during VM work: #{leased.fetch('job').fetch('payload').fetch('exercise')}"
     worker_post("/internal/executions/#{output.fetch('job_id')}/result", { lease_token: leased.fetch("lease_token"), result: output })
     output
   end

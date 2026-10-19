@@ -1,0 +1,15 @@
+{
+  "slug": "safe-backfill",
+  "title": "Backfill Legacy Customer Emails",
+  "version": 1,
+  "operation": "rails.safe-backfill.v1",
+  "duration_minutes": 60,
+  "summary": "Build a resumable, bounded backfill alongside a compatible API. Preserve concurrent writes, tenant-scoped uniqueness and stable cursor progress.",
+  "skills": [
+    "Data migration",
+    "Batch processing",
+    "Backward compatibility"
+  ],
+  "difficulty": "Senior \u00b7 production changes",
+  "entry_file": "app/services/customer_email_backfill.rb"
+}

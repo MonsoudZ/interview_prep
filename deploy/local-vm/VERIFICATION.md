@@ -23,3 +23,9 @@ The current immutable image is `sha256:c9f70b151331d4153ff622d41a4d1ff92e4db3d2a
 The complete real queue/VM integration passed with **3 runs, 192 assertions, no failures/errors/skips**. It executed every Rails starter/reference and Ruby starter/reference, preparation, signing, authenticated callback identity, preserved source revision, and immutable submission. Ruby reference: **12 groups, 112 assertions**, including three 100,000-input cases. New Rails references: 12 groups each, with feed 90, delivery 64, checkout 119, tenancy 153 assertions. All intentional defects were caught in trusted fixture validation (12 Rails mutations, four Ruby mutations); recorded reports live under curriculum/.
 
 These remain execution-evidence checks. They do not certify tamper resistance, production concurrency, adversarial isolation, calibrated hiring judgments, or hosted Railway execution. No hosted compute was provisioned.
+
+## Expanded curriculum and mock interviews — 2026-10-18
+
+Rebuilt and activated image `sha256:900545727221727f873a3283cb886c850aaf7b9692a47f08ae97fd248405cc50` with `interview.curriculum=rails-ruby-v2` and 18 installed execution/preparation operations. The full real-VM suite passed with **3 runs, 330 assertions, zero failures/errors/skips**: all eight Rails starters/references, Ruby, queue callbacks/revision identity and the existing observable isolation probe. The bridge also ran the new support reference in the browser, reporting 12 tests/65 assertions and preserving its submitted revision inside the mock interview. Legacy images keep their smaller capability inventories.
+
+An initial expanded live run received a callback 404. An isolated curriculum rerun with explicit lease/job existence assertions passed (1 run/241 assertions), followed by the complete successful 3-run/330-assertion run. No lease/authentication validation was relaxed. PostgreSQL concurrency and production migration safety remain outside this local proof.

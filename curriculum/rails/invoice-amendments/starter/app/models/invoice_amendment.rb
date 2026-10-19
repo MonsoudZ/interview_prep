@@ -1,0 +1,2 @@
+class InvoiceAmendment < ApplicationRecord
+end

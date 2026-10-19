@@ -8,7 +8,7 @@ class RailsCurriculum
     entries.find { |entry| entry.fetch("slug") == slug && entry.fetch("version") == version }
   end
 
-  ORDER = %w[repository-events tenant-projects idempotent-checkout delivery-retries activity-feed].freeze
+  ORDER = %w[repository-events tenant-projects idempotent-checkout delivery-retries activity-feed support-escalations invoice-amendments safe-backfill].freeze
 
   def self.reference(exercise)
     root = if exercise.slug == "repository-events" && exercise.version == 1

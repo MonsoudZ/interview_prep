@@ -21,7 +21,7 @@ class RailsCurriculumTest < ActionDispatch::IntegrationTest
   test "published scenarios expose full repositories hints and submission reviews without leaking references" do
     get "/api/exercises"
     catalog = response.parsed_body.fetch("exercises")
-    assert_equal 5, catalog.count { |e| e["track"] == "rails" }
+    assert_equal 8, catalog.count { |e| e["track"] == "rails" }
     RailsCurriculum.entries.each do |entry|
       exercise = ExerciseVersion.find_by!(slug: entry.fetch("slug"), version: 1)
       public_entry = catalog.find { |e| e["id"] == exercise.id }

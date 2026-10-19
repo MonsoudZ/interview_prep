@@ -99,6 +99,87 @@
     "summary": "12 runs, 118 assertions, 1 failures, 0 errors, 0 skips"
   },
   {
+    "exercise": "invoice-amendments",
+    "variant": "prepare",
+    "summary": "READY"
+  },
+  {
+    "exercise": "invoice-amendments",
+    "variant": "starter",
+    "summary": "12 runs, 16 assertions, 10 failures, 2 errors, 0 skips"
+  },
+  {
+    "exercise": "invoice-amendments",
+    "variant": "reference",
+    "summary": "12 runs, 75 assertions, 0 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "invoice-amendments",
+    "variant": "mutation",
+    "defect": "version: version + 1",
+    "summary": "12 runs, 71 assertions, 5 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "invoice-amendments",
+    "variant": "mutation",
+    "defect": "add_index :invoice_amendments, [:invoice_id, :version], unique: true",
+    "summary": "12 runs, 74 assertions, 1 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "safe-backfill",
+    "variant": "prepare",
+    "summary": "READY"
+  },
+  {
+    "exercise": "safe-backfill",
+    "variant": "starter",
+    "summary": "12 runs, 16 assertions, 12 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "safe-backfill",
+    "variant": "reference",
+    "summary": "12 runs, 47 assertions, 0 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "safe-backfill",
+    "variant": "mutation",
+    "defect": "normalized_email: nil, email: row.email",
+    "summary": "12 runs, 45 assertions, 1 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "safe-backfill",
+    "variant": "mutation",
+    "defect": ".limit(batch_size)",
+    "summary": "12 runs, 40 assertions, 3 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "support-escalations",
+    "variant": "prepare",
+    "summary": "READY"
+  },
+  {
+    "exercise": "support-escalations",
+    "variant": "starter",
+    "summary": "12 runs, 16 assertions, 9 failures, 2 errors, 0 skips"
+  },
+  {
+    "exercise": "support-escalations",
+    "variant": "reference",
+    "summary": "12 runs, 65 assertions, 0 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "support-escalations",
+    "variant": "mutation",
+    "defect": "organization_id: agent.organization_id",
+    "summary": "12 runs, 60 assertions, 2 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "support-escalations",
+    "variant": "mutation",
+    "defect": "agent.role == \"supervisor\"",
+    "summary": "12 runs, 62 assertions, 1 failures, 0 errors, 0 skips"
+  },
+  {
     "exercise": "tenant-projects",
     "variant": "prepare",
     "summary": "READY"

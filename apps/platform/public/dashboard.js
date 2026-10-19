@@ -14,6 +14,7 @@ export function createDashboard({
   api: request,
   account,
   onSession,
+  onMocks,
   onOpenSession,
   onSignedOut,
   notice: showNotice,
@@ -109,7 +110,8 @@ export function createDashboard({
       )
       .join(
         "",
-      )}</nav><div class="profile"><span class="avatar">${esc(account.name.slice(0, 1).toUpperCase())}</span><div><strong>${esc(account.name)}</strong><span>Personal account</span></div><button class="quiet" id="logout" aria-label="Sign out" title="Sign out">↪</button></div></aside><main class="main">${heading}${content}</main></div>`;
+      )}<button id="mock-interviews">${icon("history")}Mock interviews</button></nav><div class="profile"><span class="avatar">${esc(account.name.slice(0, 1).toUpperCase())}</span><div><strong>${esc(account.name)}</strong><span>Personal account</span></div><button class="quiet" id="logout" aria-label="Sign out" title="Sign out">↪</button></div></aside><main class="main">${heading}${content}</main></div>`;
+    root.querySelector("#mock-interviews").onclick = onMocks;
     root.querySelectorAll("[data-page]").forEach(
       (button) =>
         (button.onclick = () => {
@@ -188,7 +190,7 @@ export function createDashboard({
   }
   function historyRows(rows) {
     return rows.length
-      ? `<div class="history">${rows.map((s) => `<div class="history-row"><div class="history-info"><strong>${esc(s.title)}</strong><p>${modeName(s.mode)}${s.revision_of_id ? " · rework" : ""}<span>·</span>${new Date(s.updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</p></div><span class="session-badge status-${esc(s.status)}">${statusName(s.status)}</span><button class="quiet" data-session="${s.id}">${s.status === "submitted" ? "View" : "Continue"} ${icon("arrow")}</button></div>`).join("")}</div>`
+      ? `<div class="history">${rows.map((s) => `<div class="history-row"><div class="history-info"><strong>${esc(s.title)}</strong><p>${modeName(s.mode)}${s.revision_of_id ? " · rework" : ""}${s.mock_interview_id ? " · mock interview" : ""}<span>·</span>${new Date(s.updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</p></div><span class="session-badge status-${esc(s.status)}">${statusName(s.status)}</span><button class="quiet" data-session="${s.id}">${s.status === "submitted" ? "View" : "Continue"} ${icon("arrow")}</button></div>`).join("")}</div>`
       : `<div class="empty"><h3>No sessions yet</h3><p>Open an exercise to start your first attempt.</p><button data-page="library">Browse exercises</button></div>`;
   }
   async function refreshProgress() {

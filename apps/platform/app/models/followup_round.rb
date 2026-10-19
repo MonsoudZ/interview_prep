@@ -1,11 +1,18 @@
 class FollowupRound < ApplicationRecord
+  has_one :mock_interview_stage
   belongs_to :interview_session
   belongs_to :source_snapshot
   validates :mode, inclusion: { in: %w[guided assessment] }
   validates :status, inclusion: { in: %w[ready active completed] }
 
   def expire_locked!
-    complete_locked!("deadline") if status == "active" && deadline_at && deadline_at <= Time.current
+    overall_deadline = mock_interview_stage&.mock_interview&.deadline_at
+    if status != "completed" && overall_deadline && overall_deadline <= Time.current
+      update!(deadline_at: overall_deadline)
+      complete_locked!("deadline")
+    elsif status == "active" && deadline_at && deadline_at <= Time.current
+      complete_locked!("deadline")
+    end
   end
 
   def complete_locked!(reason)

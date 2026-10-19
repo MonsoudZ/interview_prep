@@ -7,6 +7,9 @@ class FollowupWorkflow
       raise Workspace::Invalid, "Invalid follow-up request identity"
     end
     raise Workspace::Invalid, "Choose guided or timed follow-up" unless %w[guided assessment].include?(mode)
+    if session.mock_interview_stage && session.mock_interview_stage.mock_interview.status != "completed"
+      raise SessionCommandError, "Use the mock interview to open its cross-exercise follow-up stage"
+    end
     account.with_lock do
       session.with_lock do
         session.expire_locked!
@@ -64,7 +67,15 @@ class FollowupWorkflow
           raise SessionCommandError, "This round has already started" unless round.status == "ready"
           mode = params[:mode] || round.mode
           raise Workspace::Invalid, "Choose guided or timed follow-up" unless %w[guided assessment].include?(mode)
-          round.update!(mode: mode, status: "active", started_at: Time.current, deadline_at: mode == "assessment" ? round.duration_seconds.seconds.from_now : nil)
+          stage = round.mock_interview_stage
+          if stage
+            raise SessionCommandError, "Mock interview follow-ups are timed" unless mode == "assessment"
+            parent = stage.mock_interview
+            raise SessionCommandError, "This interview stage is no longer current" unless parent.status == "active" && parent.stage_index == stage.position
+          end
+          deadline = mode == "assessment" ? round.duration_seconds.seconds.from_now : nil
+          deadline = [deadline, stage.mock_interview.deadline_at].compact.min if stage
+          round.update!(mode: mode, status: "active", started_at: Time.current, deadline_at: deadline)
         elsif command == "review"
           review!(round, params)
         else
@@ -124,7 +135,8 @@ class FollowupWorkflow
     round.with_lock { round.expire_locked! }
     session = round.interview_session
     question = round.questions[round.question_index] if round.status == "active"
-    { id: round.id, session_id: session.id, title: session.exercise_version.title, source_revision: round.source_snapshot.revision,
+    stage = round.mock_interview_stage
+    { id: round.id, session_id: session.id, title: stage ? stage.mock_interview.title : session.exercise_version.title, source_revision: round.source_snapshot.revision,
       content_version: round.content_version, mode: round.mode, status: round.status, version: round.lock_version,
       question_index: round.question_index, question_count: round.questions.length,
       question: question && question.slice("id", "title", "kind", "prompt"),
@@ -133,6 +145,8 @@ class FollowupWorkflow
       completion_reason: round.completion_reason, server_time: Time.current,
       transcript: round.status == "completed" ? round.questions.map { |item| item.merge("answer" => round.answers[item.fetch("id")] || { "text" => "", "status" => "unanswered" }) } : nil,
       review_entries: round.status == "completed" ? round.review_entries : nil, reflection: round.status == "completed" ? round.reflection : nil,
+      mock_interview_id: stage&.mock_interview_id,
+      source_submissions: stage ? round.questions.map { |item| item.slice("source_session_id", "source_revision") }.uniq : nil,
       prior_exposure: true, source_is_rework: session.revision_of_id.present? }
   end
 end

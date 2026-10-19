@@ -4,11 +4,11 @@ export function workspaceMarkup(session) {
   const design = !!session.files["diagram.json"];
   return `<main class="workspace ${design ? "is-design" : ""}">
     <header class="workspace-head">
-    <button id="back" class="quiet" aria-label="Back to studio">← <span>Studio</span>
+    <button id="back" class="quiet" aria-label="${session.mock_interview_id ? "Back to mock interview" : "Back to studio"}">← <span>${session.mock_interview_id ? "Interview" : "Studio"}</span>
     </button>
     <div class="workspace-identity">
     <strong>${esc(session.title)}</strong>
-    <span>${modeName(session.mode)}${session.revision_of_id ? " · rework" : ""}</span>
+    <span>${modeName(session.mode)}${session.mock_interview_id ? " · mock interview stage" : ""}${session.revision_of_id ? " · rework" : ""}</span>
     </div>
     <span class="spacer">
     </span>
@@ -75,6 +75,7 @@ export function workspaceMarkup(session) {
     <h3>${esc(session.title)}</h3>
     ${session.revision_of_id ? `<section class="rework-context" aria-label="Rework context"><h4>Revision practice</h4><p><strong>Your goal:</strong> ${esc(session.revision_context.goal)}</p><p class="subtitle">Working from an earlier submission of the same exercise version.</p><button id="compare-rework">Compare saved changes</button><button id="open-original" class="quiet">Original submission →</button><details><summary>Feedback from the original</summary>${renderSavedFeedback(session.revision_context)}</details></section>` : ""}
     ${session.practice_focus ? `<section class="practice-focus" aria-label="Practice focus"><h4>Your practice focus</h4><strong>${esc(session.practice_focus.title)}</strong><p>${esc(session.practice_focus.practice)}</p><p class="subtitle">Based on your earlier self-assessment. Submit and review this attempt to reassess the gap.</p></section>` : ""}
+    ${session.mock_interview_id ? `<section class="practice-focus"><h4>Part of a mock interview · ${session.duration_minutes} minutes</h4><p>The stage and overall deadlines keep running while you navigate. After submitting, use “Interview” at the top to continue to the next stage. The brief may include pacing suggestions for the standalone exercise.</p></section>` : ""}
     <div class="session-setup">
     <p id="session-state">
     </p>

@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   delete "/api/logout", to: "auth#logout"
   get "/api/exercises", to: "exercises#index"
   get "/api/progress", to: "progress#show"
+  resources :mock_interviews, path: "/api/mock_interviews", only: [:index, :create, :show, :update]
   resources :interview_sessions, path: "/api/sessions", controller: "interview_sessions", only: [:index, :create, :show] do
     member do
       put :snapshot

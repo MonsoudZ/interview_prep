@@ -112,10 +112,11 @@ def inspect_image(docker, image):
         raise InfrastructureError("Worker image does not declare the expected user/exercise contract")
     report = {key: info.get(key) for key in ("Id", "Os", "Architecture", "Created")}
     inventory = labels.get("interview.curriculum")
-    if inventory == "rails-ruby-v1":
+    if inventory == "rails-ruby-v2":
         report["operations"] = list(OPERATIONS)
-    elif inventory == "rails-v1":
-        report["operations"] = [operation for operation in OPERATIONS if operation.startswith("rails.")]
+    elif inventory in ("rails-v1", "rails-ruby-v1"):
+        legacy = ("tenant-projects", "idempotent-checkout", "delivery-retries", "activity-feed")
+        report["operations"] = [op for op in OPERATIONS if op.startswith("rails.events.") or any(op.startswith(f"rails.{slug}.") for slug in legacy) or (inventory == "rails-ruby-v1" and op.startswith("ruby."))]
     else:
         report["operations"] = ["rails.events.v1", "rails.events.prepare.v1"]
     return report

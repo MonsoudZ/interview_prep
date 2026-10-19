@@ -46,7 +46,7 @@ The hosted app and local worker are separate processes. A future Railway-hosted 
 See [runtime.json](runtime.json) and [verification](VERIFICATION.md). The current image is:
 
 ```text
-sha256:c9f70b151331d4153ff622d41a4d1ff92e4db3d2a86d3878e852922e353d639f
+sha256:900545727221727f873a3283cb886c850aaf7b9692a47f08ae97fd248405cc50
 ```
 
 The worker still requires Linux/Docker/gVisor. Its Linux-only check was not relaxed to make a Mac process look isolated. `services/local_vm/execute.py` sends the signed job, image ID, and signing key to the trusted VM entry point over SSH stdin. The key is not placed in a command argument, staged file, or candidate container. The original worker inside Linux verifies the signature/revision, inspects the image, applies policy, runs the job, records replay protection, and cleans up.
@@ -56,7 +56,7 @@ The authenticated local bridge polls Rails on loopback, advertises real VM/image
 Private files are under `services/local_vm/.state/` (ignored by Git and Docker build context). `development.json` contains worker keys; `development.log` contains local server/bridge diagnostics. Do not share those files. Reinitialize only the image pointer while retaining existing keys:
 
 ```sh
-python3 services/local_vm/dev.py init --image sha256:c9f70b151331d4153ff622d41a4d1ff92e4db3d2a86d3878e852922e353d639f
+python3 services/local_vm/dev.py init --image sha256:900545727221727f873a3283cb886c850aaf7b9692a47f08ae97fd248405cc50
 ```
 
 ## Recreate or update
@@ -101,10 +101,10 @@ The builder records the resulting immutable image ID/provenance inside the VM. U
 From `apps/platform`:
 
 ```sh
-RUN_LINUX_WORKER_INTEGRATION=1 INTERVIEW_COLIMA_PROFILE=interview INTERVIEW_WORKER_IMAGE=sha256:c9f70b151331d4153ff622d41a4d1ff92e4db3d2a86d3878e852922e353d639f ruby bin/rails test test/integration/live_worker_test.rb
+RUN_LINUX_WORKER_INTEGRATION=1 INTERVIEW_COLIMA_PROFILE=interview INTERVIEW_WORKER_IMAGE=sha256:900545727221727f873a3283cb886c850aaf7b9692a47f08ae97fd248405cc50 ruby bin/rails test test/integration/live_worker_test.rb
 ```
 
-This test passed with **3 runs, 192 assertions, zero failures/errors/skips**. It runs preparation, starter failures and reference success for all five Rails repositories and Ruby intervals, observable isolation checks, callback/revision validation, and immutable submissions through the actual VM. It uses a synthetic account in the test database.
+This test passed with **3 runs, 330 assertions, zero failures/errors/skips**. It runs preparation, starter failures and reference success for all eight Rails repositories and Ruby intervals, observable isolation checks, callback/revision validation, and immutable submissions through the actual VM. It uses a synthetic account in the test database.
 
 The separate browser/bridge check uses the local preview account and a clearly labeled reference attempt; it is not evidence of the user's interview performance. Adversarial escape testing, deliberate resource exhaustion, PostgreSQL concurrency, public-host deployment, voice, and calibrated AI review remain outside this verification.
 

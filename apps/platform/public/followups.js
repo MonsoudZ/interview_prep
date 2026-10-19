@@ -69,6 +69,9 @@ export function followupTranscript(round, lateDraft = null) {
     lines.push(
       `${index + 1}. ${item.title} (${item.kind})`,
       item.prompt,
+      ...(item.source_session_id
+        ? [`Source: ${item.source_session_id} @ ${item.source_revision}`]
+        : []),
       `Response status: ${statusName(item.answer.status)}`,
       item.answer.text || "[No saved answer]",
       "Review focus:",
@@ -93,7 +96,7 @@ export function renderFollowupReview(round) {
   const explained = Object.values(round.review_entries || {}).filter(
     (entry) => entry.rating === "needs_practice",
   );
-  return `<p class="followup-result">${round.transcript.filter((item) => item.answer.status === "answered").length}/${round.question_count} answered. ${round.completion_reason === "deadline" ? "Time expired." : round.completion_reason === "finished_early" ? "Finished early; remaining questions are unasked." : "All questions reached."}</p><p class="subtitle">Your typed answers are preserved. Review focuses are prompts for reflection, not model judgments or an answer key. These self-checks stay separate from coding/design progress.</p><form id="followup-review">${round.transcript
+  return `<p class="followup-result">${round.transcript.filter((item) => item.answer.status === "answered").length}/${round.question_count} answered. ${["deadline", "interview_deadline"].includes(round.completion_reason) ? "Time expired." : ["finished_early", "interview_finished"].includes(round.completion_reason) ? "Finished early; remaining questions are unasked." : "All questions reached."}</p><p class="subtitle">Your typed answers are preserved. Review focuses are prompts for reflection, not model judgments or an answer key. These self-checks stay separate from coding/design progress.</p><form id="followup-review">${round.transcript
     .map((item, index) => {
       const entry = round.review_entries?.[item.id] || {
         rating: "not_observed",
@@ -154,6 +157,7 @@ export function openFollowups(
     body.querySelectorAll("button,input,select,textarea").forEach((node) => {
       const text = node.tagName === "TEXTAREA";
       node.disabled =
+        (node.id === "followup-mode" && !!state?.mock_interview_id) ||
         busy ||
         (!!saving && !text) ||
         (conflict && !text && node.id !== "followup-export");
@@ -445,9 +449,9 @@ export function openFollowups(
   }
   function render() {
     if (!scope.alive || !state) return;
-    body.innerHTML = `<button type="button" class="quiet" id="all-followups">← All rounds</button><p class="followup-provenance">${esc(state.title)} · ${modeName(state.mode)} · source ${esc(state.source_revision.slice(0, 10))}</p>${state.source_is_rework ? '<p class="subtitle">This round follows a rework, with prior source and feedback available.</p>' : ""}`;
+    body.innerHTML = `<button type="button" class="quiet" id="all-followups">← All rounds</button><p class="followup-provenance">${esc(state.title)} · ${modeName(state.mode)} · ${state.mock_interview_id ? `${state.source_submissions.length} submitted workspaces · captured revisions` : `source ${esc(state.source_revision.slice(0, 10))}`}</p>${state.source_is_rework ? '<p class="subtitle">This round follows a rework, with prior source and feedback available.</p>' : ""}`;
     if (state.status === "ready") {
-      body.innerHTML += `<h3>Ready for follow-ups</h3><p>${state.question_count} questions. The timed budget is ${state.duration_seconds / 60} minutes for the whole round; closing the window will not pause it.</p><label>Practice mode<select id="followup-mode"><option value="guided" ${state.mode === "guided" ? "selected" : ""}>Guided · no deadline</option><option value="assessment" ${state.mode === "assessment" ? "selected" : ""}>Timed follow-up</option></select></label><button id="start-followup" class="primary">Start follow-up round</button>`;
+      body.innerHTML += `<h3>Ready for follow-ups</h3><p>${state.question_count} questions. The timed budget is ${state.duration_seconds / 60} minutes for the whole round; closing the window will not pause it.</p><label>Practice mode<select id="followup-mode" ${state.mock_interview_id ? "disabled" : ""}><option value="guided" ${state.mode === "guided" ? "selected" : ""}>Guided · no deadline</option><option value="assessment" ${state.mode === "assessment" ? "selected" : ""}>Timed follow-up</option></select></label><button id="start-followup" class="primary">Start follow-up round</button>`;
       body.querySelector("#start-followup").onclick = () =>
         command("start", { mode: body.querySelector("#followup-mode").value });
     } else if (state.status === "active") {

@@ -49,7 +49,7 @@ class DeploymentTests(unittest.TestCase):
                     inspect_image("docker", self.image)
 
     def test_image_inventory_does_not_advertise_exercises_from_newer_images(self):
-        for label, expected in [(None, 2), ("rails-v1", 10), ("rails-ruby-v1", 12)]:
+        for label, expected in [(None, 2), ("rails-v1", 10), ("rails-ruby-v1", 12), ("rails-ruby-v2", 18)]:
             info = self.image_info()
             if label:
                 info["Config"]["Labels"]["interview.curriculum"] = label

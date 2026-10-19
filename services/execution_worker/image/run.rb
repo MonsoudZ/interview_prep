@@ -14,7 +14,7 @@ abort "Invalid files" unless files.is_a?(Hash) && files.size.between?(1, 128)
 scenario = nil
 if (index = ARGV.index("--exercise"))
   scenario = ARGV[index + 1]
-  abort "Unknown exercise" unless %w[tenant-projects idempotent-checkout delivery-retries activity-feed].include?(scenario)
+  abort "Unknown exercise" unless %w[tenant-projects idempotent-checkout delivery-retries activity-feed support-escalations invoice-amendments safe-backfill].include?(scenario)
 end
 
 Dir.chdir("/workspace") do

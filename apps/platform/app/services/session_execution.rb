@@ -15,6 +15,9 @@ class SessionExecution
 
   def execute(request_id:)
     @session.expire!
+    if @session.mock_interview_stage && !%w[active submitted].include?(@session.status)
+      raise SessionCommandError, "Start this interview stage before running tests"
+    end
     enqueue("tests", request_id)
   end
 

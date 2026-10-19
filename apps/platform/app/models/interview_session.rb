@@ -1,4 +1,5 @@
 class InterviewSession < ApplicationRecord
+  has_one :mock_interview_stage
   belongs_to :account
   belongs_to :exercise_version
   belongs_to :revision_of, class_name: "InterviewSession", optional: true
@@ -18,7 +19,10 @@ class InterviewSession < ApplicationRecord
 
   # Call only while holding this session's database lock, including immediately before writes.
   def expire_locked!
-    if status == "active" && deadline_at && deadline_at <= Time.current
+    overall_deadline = mock_interview_stage&.mock_interview&.deadline_at
+    if status != "submitted" && overall_deadline && overall_deadline <= Time.current
+      update!(status: "submitted", submitted_revision: current_revision, submitted_at: overall_deadline)
+    elsif status == "active" && deadline_at && deadline_at <= Time.current
       update!(status: "submitted", submitted_revision: current_revision, submitted_at: deadline_at)
     end
   end

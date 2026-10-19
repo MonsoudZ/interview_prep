@@ -112,12 +112,15 @@ export function mountWorkspace({
     dirty = false;
     conflict = false;
     selectedExecutionId = null;
-    selected = hasDesignCanvas
-      ? "requirements.md"
-      : session.track === "rails" &&
-          files["app/controllers/events_controller.rb"] !== undefined
-        ? "app/controllers/events_controller.rb"
-        : session.editable_paths[0] || Object.keys(files)[0];
+    selected =
+      session.initial_path && files[session.initial_path] !== undefined
+        ? session.initial_path
+        : hasDesignCanvas
+          ? "requirements.md"
+          : session.track === "rails" &&
+              files["app/controllers/events_controller.rb"] !== undefined
+            ? "app/controllers/events_controller.rb"
+            : session.editable_paths[0] || Object.keys(files)[0];
     preferencesStore = preferenceStore(
       storage,
       `interview.workspace.v1:${account.id}:${session.id}`,

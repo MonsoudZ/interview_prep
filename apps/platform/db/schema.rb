@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_18_000004) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_18_000005) do
   create_table "accounts", id: :string, force: :cascade do |t|
     t.string "name", null: false
     t.string "email", null: false
@@ -139,6 +139,43 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_18_000004) do
     t.index ["revision_of_id"], name: "one_unfinished_rework", unique: true, where: "revision_of_id IS NOT NULL AND status IN ('draft', 'preparing', 'ready', 'active')"
   end
 
+  create_table "mock_interview_stages", id: :string, force: :cascade do |t|
+    t.string "mock_interview_id", null: false
+    t.string "exercise_version_id"
+    t.string "interview_session_id"
+    t.string "followup_round_id"
+    t.integer "position", null: false
+    t.string "kind", null: false
+    t.string "title", null: false
+    t.integer "duration_seconds", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["exercise_version_id"], name: "index_mock_interview_stages_on_exercise_version_id"
+    t.index ["followup_round_id"], name: "index_mock_interview_stages_on_followup_round_id", unique: true
+    t.index ["interview_session_id"], name: "index_mock_interview_stages_on_interview_session_id", unique: true
+    t.index ["mock_interview_id", "position"], name: "index_mock_interview_stages_on_mock_interview_id_and_position", unique: true
+    t.index ["mock_interview_id"], name: "index_mock_interview_stages_on_mock_interview_id"
+  end
+
+  create_table "mock_interviews", id: :string, force: :cascade do |t|
+    t.string "account_id", null: false
+    t.string "client_request_id", null: false
+    t.string "plan_key", null: false
+    t.string "title", null: false
+    t.string "status", default: "ready", null: false
+    t.integer "stage_index", default: 0, null: false
+    t.datetime "started_at"
+    t.datetime "deadline_at"
+    t.datetime "completed_at"
+    t.string "completion_reason"
+    t.text "reflection", default: "", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "client_request_id"], name: "index_mock_interviews_on_account_id_and_client_request_id", unique: true
+    t.index ["account_id"], name: "index_mock_interviews_on_account_id"
+  end
+
   create_table "review_workers", id: :string, force: :cascade do |t|
     t.string "model", null: false
     t.string "model_digest", null: false
@@ -187,6 +224,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_18_000004) do
   add_foreign_key "interview_sessions", "accounts"
   add_foreign_key "interview_sessions", "exercise_versions"
   add_foreign_key "interview_sessions", "interview_sessions", column: "revision_of_id"
+  add_foreign_key "mock_interview_stages", "exercise_versions"
+  add_foreign_key "mock_interview_stages", "followup_rounds"
+  add_foreign_key "mock_interview_stages", "interview_sessions"
+  add_foreign_key "mock_interview_stages", "mock_interviews"
+  add_foreign_key "mock_interviews", "accounts"
   add_foreign_key "session_reviews", "interview_sessions"
   add_foreign_key "session_reviews", "source_snapshots"
   add_foreign_key "source_snapshots", "interview_sessions"

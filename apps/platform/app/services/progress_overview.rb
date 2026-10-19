@@ -8,7 +8,7 @@ class ProgressOverview
 
   def initialize(account)
     @account_id = account.id
-    @sessions = account.interview_sessions.includes(:exercise_version, :session_review, :hint_reveals)
+    @sessions = account.interview_sessions.includes(:exercise_version, :session_review, :hint_reveals, :mock_interview_stage)
       .order(:submitted_at, :created_at, :id).to_a
     @catalog = ExerciseVersion.all.group_by(&:slug).transform_values { |versions| versions.max_by(&:version) }
     @content = {}
@@ -34,7 +34,7 @@ class ProgressOverview
       end
       criteria = rubric&.fetch("criteria") || []
       observed = criteria.count { |criterion| OBSERVED.include?(entries.dig(criterion.fetch("id"), "rating")) }
-      (session.revision_of_id ? [] : criteria).each do |criterion|
+      ((session.revision_of_id || session.mock_interview_stage) ? [] : criteria).each do |criterion|
         key = [session.exercise_version.slug, rubric.fetch("version"), criterion.fetch("id")].join(":")
         group = groups[key] ||= { key: key, track: session.exercise_version.track, exercise: session.exercise_version.title,
           exercise_version: session.exercise_version.version, slug: session.exercise_version.slug,
@@ -50,7 +50,7 @@ class ProgressOverview
         exercise_version: session.exercise_version.version, mode: session.mode, submitted_at: session.submitted_at,
         observed: observed, total: criteria.length, review_updated_at: review&.updated_at,
         reflection: review&.reflection.to_s, hints_revealed: session.hint_reveals.length, practice_focus: session.practice_focus,
-        revision_of_id: session.revision_of_id }
+        revision_of_id: session.revision_of_id, mock_interview_id: session.mock_interview_stage&.mock_interview_id }
     end
     skills = groups.values.filter_map do |group|
       observations = group[:observations] # Newest submission first; editing an old review does not reorder attempts.
@@ -66,7 +66,7 @@ class ProgressOverview
       end
       target = @catalog[group[:slug]]
       focused = @sessions.reverse.find { |candidate| candidate.practice_focus&.values_at("source_session_id", "criterion_id", "content_version") == [latest[:session_id], group[:criterion_id], group[:content_version]] }
-      newer = submitted.find { |candidate| candidate.revision_of_id.nil? && candidate.exercise_version.slug == group[:slug] && content(candidate.exercise_version)&.fetch("version") == group[:content_version] }
+      newer = submitted.find { |candidate| candidate.revision_of_id.nil? && candidate.mock_interview_stage.nil? && candidate.exercise_version.slug == group[:slug] && content(candidate.exercise_version)&.fetch("version") == group[:content_version] }
       group.merge(open_gap: GAPS.include?(latest[:rating]), recurring: GAPS.include?(latest[:rating]) && gap_count >= 2,
         gap_count: gap_count, observation_count: observations.length, trend: trend, latest: latest,
         observations: observations.first(8), history_truncated: observations.length > 8,
@@ -95,6 +95,6 @@ class ProgressOverview
       plan: gaps, skills: skills.sort_by { |item| [item[:track], item[:exercise], item[:title]] },
       awaiting_review: attempts.select { |attempt| attempt[:total] > attempt[:observed] },
       recent_attempts: recent, recent_limit: 20, followups: FollowupWorkflow.recent_for(@account_id),
-      method: "Self-assessments only. One observation per criterion per submission; revisions of a saved review replace that observation. Comparisons stay within the same exercise and rubric version. Once you assess a current rubric, older rubrics remain in history and leave the active plan without being marked resolved. Reworks appear in history and the review queue, but do not change starter-attempt trends or close their gaps. Tests and model feedback do not determine these ratings." }
+      method: "Self-assessments only. One observation per criterion per submission; revisions of a saved review replace that observation. Comparisons stay within the same exercise and rubric version. Once you assess a current rubric, older rubrics remain in history and leave the active plan without being marked resolved. Reworks and mock interview stages appear in history and the review queue, but do not change starter-attempt trends or close their gaps. Tests and model feedback do not determine these ratings." }
   end
 end

@@ -9,6 +9,9 @@ The Rails path is a progression, rather than a collection of interchangeable CRU
 | 3 | Idempotent Inventory Checkout | 65 min | Stub with supplied tables | Replay, rollback, database invariants |
 | 4 | Retry-Safe Delivery Job | 60 min | Supplied job and fake transport | State transitions, durable attempts, duplicate jobs |
 | 5 | Repair a Slow Activity Feed | 60 min | Working but slow/leaky endpoint | Cursor boundaries, N+1 queries, bounded loading |
+| 6 | Repair Support Escalations | 55 min | Buggy existing mutation endpoint | Role/tenant disclosure, transitions, atomic audit |
+| 7 | Prevent Lost Invoice Updates | 60 min | Existing unconditional update API | Conditional revisions, append-only audit, schema constraints |
+| 8 | Backfill Legacy Customer Emails | 60 min | Legacy read API and unsafe backfill | Compatible reads, bounded cursors, stale-write protection, duplicate conflicts |
 
 Each Rails repository has twelve visible executable test groups, three progressive guided hints, four exercise-specific review criteria (five in the original Events exercise), interview probes, gap-based drills, a tested reference implementation, and a separately scoped senior follow-up. Times/levels are editorial estimates; they have not been calibrated against candidate cohorts.
 
@@ -51,3 +54,7 @@ Concurrency of checkout under production PostgreSQL, simultaneous job claiming, 
 ## System design workspace
 
 Reliable Webhook Delivery version 2 publishes a canvas plus six structured notes sections with the existing requirement sheet, six senior criteria, progressive hints, and outage follow-up. Architecture and notes are preserved together; submission review includes the diagram from that revision. See [the workspace contract](system_design/README.md). Existing notes-only v1 attempts remain intact. Voice, live conversational interviewing, automated architecture analysis, and reviewer calibration are still separate work.
+
+The last three exercises emphasize changes to existing systems. Their 36 test groups include injected audit failures, stale revisions, validation bypass, bounded loading and deliberately interleaved legacy/dual writes. Their briefs distinguish local SQLite evidence from real PostgreSQL concurrency and production migration safety. The backfill exercise edits a test schema and application service; it does not run production DDL migrations.
+
+Use the [mock interview plans](../docs/mock-interviews.md) to combine practical work, algorithms, architecture and follow-ups into a timed loop.

@@ -4,10 +4,10 @@ class InterviewSessionsController < ApplicationController
   end
 
   def index
-    sessions = current_account.interview_sessions.includes(:exercise_version).order(updated_at: :desc).limit(100)
+    sessions = current_account.interview_sessions.includes(:exercise_version, :mock_interview_stage).order(updated_at: :desc).limit(100)
     render json: { sessions: sessions.map { |record|
       { id: record.id, title: record.exercise_version.title, track: record.exercise_version.track,
-        mode: record.mode, status: record.status, updated_at: record.updated_at, revision_of_id: record.revision_of_id }
+        mode: record.mode, status: record.status, updated_at: record.updated_at, revision_of_id: record.revision_of_id, mock_interview_id: record.mock_interview_stage&.mock_interview_id }
     } }
   end
 
@@ -64,6 +64,9 @@ class InterviewSessionsController < ApplicationController
     record.with_lock do
       record.expire_locked!
       return conflict("This submission is read-only") if record.status == "submitted"
+      if record.mock_interview_stage && record.status != "active"
+        return conflict("Start this interview stage before editing its source")
+      end
       return conflict("A newer save exists. Reload before saving.") unless params[:expected_revision] == record.current_revision
       value = params.require(:files)
       raise Workspace::Invalid, "Expected a file map" unless value.is_a?(ActionController::Parameters)

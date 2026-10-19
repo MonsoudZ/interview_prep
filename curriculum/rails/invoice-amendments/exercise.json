@@ -1,0 +1,15 @@
+{
+  "slug": "invoice-amendments",
+  "title": "Prevent Lost Invoice Updates",
+  "version": 1,
+  "operation": "rails.invoice-amendments.v1",
+  "duration_minutes": 60,
+  "summary": "Extend an existing invoice API with conditional revisions, tenant isolation, immutable amendment history, and database-backed atomicity.",
+  "skills": [
+    "Concurrency",
+    "Optimistic locking",
+    "API compatibility"
+  ],
+  "difficulty": "Senior \u00b7 production changes",
+  "entry_file": "app/controllers/invoices_controller.rb"
+}

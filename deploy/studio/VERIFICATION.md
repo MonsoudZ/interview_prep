@@ -12,3 +12,13 @@ Completed on the existing development Mac, **not on the user's M4 Max Studio**:
 Not verified: Studio installation, real Ollama inference, actual model latency/memory, semantic review accuracy, human-reviewed calibration, remote SSH access, PostgreSQL concurrency, public hosting, automatic login/startup services, or background operation across sleep. No paid model fallback or Railway compute was provisioned.
 
 The initial model candidate is `qwen3.5:27b`. Its selection is provisional until measured against Rails, Ruby, and system-design examples on the Studio. Report validation establishes structure and provenance, not correctness of the model's conclusions.
+
+## Expanded curriculum and complete interview milestone
+
+- Rails: **105 runs, 1,316 assertions, zero failures/errors, four expected opt-in skips**. Fifteen mock-interview integration tests cover schedules, readiness, deadlines, ordered transitions, ownership, frozen source, late follow-up writes, review provenance, focused drills and standalone trend separation.
+- Frontend: **43 tests passed**; formatting and Rails eager-loading checks passed.
+- Execution worker: **30 Python tests passed**, including capability inventories that prevent an older image from advertising new exercises. All published Rails fixtures passed preparation/reference validation and all 18 deliberate defect mutations failed behavior checks.
+- Actual Linux/gVisor integration on the laptop: **3 runs, 330 assertions, zero failures/errors/skips** on the rebuilt `rails-ruby-v2` image. Includes all eight Rails exercises, Ruby, isolation observations and real queue callbacks. See the [VM verification](../local-vm/VERIFICATION.md).
+- Browser: completed the debugging/design/follow-up sequence, received the new support reference result (12 tests/65 assertions), verified immutable source, saved/reloaded the overall reflection, and downloaded a consolidated review with both source identities and answered/partial/unasked states. A 390px responsive check had no horizontal document overflow. Verification sources/reflection are labeled synthetic; no personal ratings were recorded.
+
+The new app features do not require Ollama. The Studio model installation and semantic reviewer calibration remain outstanding.

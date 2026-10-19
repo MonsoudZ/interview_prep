@@ -20,12 +20,15 @@ COPY curriculum/rails/tenant-projects/starter /opt/curriculum/tenant-projects/st
 COPY curriculum/rails/idempotent-checkout/starter /opt/curriculum/idempotent-checkout/starter
 COPY curriculum/rails/delivery-retries/starter /opt/curriculum/delivery-retries/starter
 COPY curriculum/rails/activity-feed/starter /opt/curriculum/activity-feed/starter
+COPY curriculum/rails/support-escalations/starter /opt/curriculum/support-escalations/starter
+COPY curriculum/rails/invoice-amendments/starter /opt/curriculum/invoice-amendments/starter
+COPY curriculum/rails/safe-backfill/starter /opt/curriculum/safe-backfill/starter
 COPY curriculum/ruby/merge-intervals/starter /opt/ruby/merge-intervals/starter
 COPY curriculum/ruby/merge-intervals/hidden_test.rb /opt/ruby/merge-intervals/hidden_test.rb
 COPY services/execution_worker/image/ruby.rb /opt/runner/ruby.rb
 COPY services/execution_worker/image/run.rb /opt/runner/run.rb
 RUN chmod -R a-w /opt/exercise /opt/runner /opt/curriculum /opt/ruby && mkdir /workspace && chown 1000:1000 /workspace
-LABEL interview.curriculum="rails-ruby-v1"
+LABEL interview.curriculum="rails-ruby-v2"
 LABEL interview.exercise="rails.events.v1" interview.contract="1"
 USER 1000:1000
 WORKDIR /workspace

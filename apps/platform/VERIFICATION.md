@@ -124,3 +124,9 @@ Real SVG and Markdown downloads were verified: SVG parses as XML with all three 
 At 1440×960 the canvas and notes are side by side with the brief to the right. At 390×844 the layout stacks; document content/viewport widths are both 390px and notes width is 390px. Temporary viewport override was reset after QA. Screenshots: `artifacts/system-design-workspace.png`, `system-design-review.png`, `system-design-mobile.png`.
 
 No new service, package, hosted compute, or database migration was required. Voice, conversational interviewing, automated senior feedback, reference architecture libraries, collaboration, and assessment calibration remain separate work.
+
+## Complete interviews and senior curriculum — 2026-10-18
+
+Added support escalation debugging, conditional invoice amendments and safe customer email backfills: 36 new executable groups, tested references, hints, probes and four senior review criteria each. The curriculum now has eight Rails exercises. Three mock interview schedules combine practical work, optional Ruby, system design and seven mixed-source follow-ups with continuous server timing and consolidated review/export.
+
+Validation: **105 Rails tests / 1,316 assertions**, no failures/errors, four opt-in skips; **43 frontend tests**, formatting and eager loading passed; **30 execution-worker tests**; complete real Linux/gVisor suite **3 runs / 330 assertions**, no skips/failures/errors. The browser verified the full debugging plan, source-bound results, immutable submissions, synthetic question answers, reflection persistence and review download. See [the workflow and limits](../../docs/mock-interviews.md). These checks do not calibrate hiring judgments or prove PostgreSQL concurrency/online migration safety.

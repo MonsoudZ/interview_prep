@@ -3,6 +3,9 @@ const pending = (execution) => ["queued", "leased"].includes(execution.status);
 export function editorReadOnly(session, path, conflict = false) {
   return (
     conflict ||
+    (!!session.mock_interview_id &&
+      session.status !== "active" &&
+      session.status !== "submitted") ||
     session.status === "submitted" ||
     !session.editable_paths.includes(path)
   );
@@ -20,6 +23,8 @@ export function sessionPolicy(
   } = {},
 ) {
   const submitted = session.status === "submitted";
+  const lockedBeforeStart =
+    !!session.mock_interview_id && !submitted && session.status !== "active";
   const beforeStart = ["draft", "ready"].includes(session.status);
   const preparation = session.executions.find(
     (execution) =>
@@ -77,9 +82,12 @@ export function sessionPolicy(
     run: {
       hidden: !session.executable || submitted,
       disabled:
-        !session.executable || submitted || session.executions.some(pending),
+        !session.executable ||
+        submitted ||
+        lockedBeforeStart ||
+        session.executions.some(pending),
     },
-    save: { hidden: submitted, disabled: submitted },
+    save: { hidden: submitted, disabled: submitted || lockedBeforeStart },
     submit: { hidden: submitted, disabled: session.status !== "active" },
     "review-shortcut": { hidden: !submitted, disabled: false },
   };
@@ -98,6 +106,6 @@ export function sessionPolicy(
         ? "Worker connected"
         : "Worker offline · Test runs will wait in the queue."
       : "Writing workspace · Execution and AI tools upcoming",
-    newFileHidden: submitted || session.track !== "rails",
+    newFileHidden: submitted || lockedBeforeStart || session.track !== "rails",
   };
 }

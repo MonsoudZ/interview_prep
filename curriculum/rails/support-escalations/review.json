@@ -1,0 +1,48 @@
+{
+  "version": "support-escalations-review-v1",
+  "hints": [
+    {
+      "title": "1 \u00b7 Trace the trust boundary",
+      "body": "Compare authenticated agent, ticket scope, role, and body separately. A valid ID alone is not authorization."
+    },
+    {
+      "title": "2 \u00b7 Make the unit of work explicit",
+      "body": "A state transition and its audit must commit together. Inject an audit failure and inspect persisted state."
+    },
+    {
+      "title": "3 \u00b7 Review negative paths",
+      "body": "Exercise missing identity, foreign tickets, non-supervisors, repeated transitions, malformed reasons, and unexpected storage errors."
+    }
+  ],
+  "criteria": [
+    {
+      "id": "authorization",
+      "title": "Identity and disclosure",
+      "target": "Use strict gateway identity and organization-scoped lookup before role checks.",
+      "probe": "Why should a foreign ticket return 404 for an ordinary agent?",
+      "practice": "Write a role \u00d7 tenant \u00d7 ticket-state matrix."
+    },
+    {
+      "id": "atomicity",
+      "title": "State and audit integrity",
+      "target": "Exactly one audit accompanies a successful state transition; storage failures roll back.",
+      "probe": "What happens when audit persistence fails after the ticket changes?",
+      "practice": "Inject a persistence failure and verify both records."
+    },
+    {
+      "id": "contracts",
+      "title": "Compatibility and validation",
+      "target": "Preserve exact response fields, trimmed reason limits, and error semantics.",
+      "probe": "Which unknown attributes would become dangerous under mass assignment?",
+      "practice": "Test malformed envelopes and Unicode boundaries."
+    },
+    {
+      "id": "investigation",
+      "title": "Debugging discipline",
+      "target": "Tie fixes to a reproduced failure and distinguish transaction guarantees from database locking.",
+      "probe": "Would this SQLite test prove two PostgreSQL requests cannot race?",
+      "practice": "Explain unique constraints, row locks and a real concurrency test."
+    }
+  ],
+  "follow_up": "Allow a supervisor to reverse an escalation. Define the audit history, authorization and retry semantics before implementing it."
+}

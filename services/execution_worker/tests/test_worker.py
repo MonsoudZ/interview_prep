@@ -49,7 +49,7 @@ class ContractTests(unittest.TestCase):
                 validate(changed)
 
     def test_rails_scenarios_dispatch_to_fixed_trusted_arguments(self):
-        for scenario in ("tenant-projects", "idempotent-checkout", "delivery-retries", "activity-feed"):
+        for scenario in ("tenant-projects", "idempotent-checkout", "delivery-retries", "activity-feed", "support-escalations", "invoice-amendments", "safe-backfill"):
             for prepare in (False, True):
                 payload = job()
                 payload["exercise"] = f"rails.{scenario}." + ("prepare.v1" if prepare else "v1")

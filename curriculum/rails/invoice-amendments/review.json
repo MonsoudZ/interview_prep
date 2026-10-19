@@ -1,0 +1,48 @@
+{
+  "version": "invoice-amendments-review-v1",
+  "hints": [
+    {
+      "title": "1 \u00b7 Reproduce two stale clients",
+      "body": "Send two requests with expected_version 0. The first commits; the second must not overwrite it."
+    },
+    {
+      "title": "2 \u00b7 Move the guard into the database",
+      "body": "A Ruby comparison followed by an unconditional write races. Use a conditional SQL update or a correctly scoped row lock."
+    },
+    {
+      "title": "3 \u00b7 Include the audit in the transaction",
+      "body": "A failed audit must roll back the amount and revision. Database uniqueness protects the history even when model validation is bypassed."
+    }
+  ],
+  "criteria": [
+    {
+      "id": "concurrency",
+      "title": "Lost-update protection",
+      "target": "The database guards the expected revision and increments exactly once.",
+      "probe": "Why is checking version in Ruby before update insufficient?",
+      "practice": "Trace two interleaved updates through SQL predicates."
+    },
+    {
+      "id": "atomicity",
+      "title": "Atomic audit history",
+      "target": "The committed amount and immutable amendment agree, with rollback on storage failures.",
+      "probe": "When must the old amount be read to keep audit evidence accurate?",
+      "practice": "Inject failure after the conditional update."
+    },
+    {
+      "id": "schema",
+      "title": "Database integrity",
+      "target": "A unique amendment revision and positive invoice amount survive validation bypass.",
+      "probe": "Which invariants require database constraints?",
+      "practice": "Use insert_all and update_columns to bypass models."
+    },
+    {
+      "id": "compatibility",
+      "title": "Client and tenant contracts",
+      "target": "Strict input and scoped identity preserve clients while reporting conflicts.",
+      "probe": "How would an If-Match contract differ from this body version?",
+      "practice": "Design a client conflict-resolution flow with a fresh read."
+    }
+  ],
+  "follow_up": "Add line-item editing and total recalculation. Decide whether one invoice revision guards every line item and how clients resolve conflicting changes."
+}

@@ -1,0 +1,2 @@
+class EscalationAudit < ApplicationRecord
+end

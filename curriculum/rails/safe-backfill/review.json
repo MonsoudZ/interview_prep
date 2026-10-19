@@ -1,0 +1,48 @@
+{
+  "version": "safe-backfill-review-v1",
+  "hints": [
+    {
+      "title": "1 \u00b7 Separate rollout from transformation",
+      "body": "Keep reads compatible with both schemas. Capture a fixed high-water ID and advance over all rows, including skipped records."
+    },
+    {
+      "title": "2 \u00b7 Bound each batch before loading",
+      "body": "Use id > cursor AND id <= high_water, order by id and limit in SQL. Determine done with an existence query after the last scanned ID."
+    },
+    {
+      "title": "3 \u00b7 Guard against stale source data",
+      "body": "Update only if normalized_email is still NULL and email still matches the value you read. Handle only expected uniqueness conflicts."
+    }
+  ],
+  "criteria": [
+    {
+      "id": "rollout",
+      "title": "Safe deployment sequence",
+      "target": "Explain expansion, dual-write, backfill, reconciliation, validation and rollback without claiming schema.rb is an online migration.",
+      "probe": "What happens if an old writer changes email after the first pass?",
+      "practice": "Write a migration rollout and reconciliation plan."
+    },
+    {
+      "id": "batching",
+      "title": "Bounded resumability",
+      "target": "Use SQL bounds, a stable high-water mark and a monotonic cursor even on skipped rows.",
+      "probe": "Why can filtering NULL rows before choosing a cursor complicate progress?",
+      "practice": "Test exact final batches, gaps, retries and new inserts."
+    },
+    {
+      "id": "concurrency",
+      "title": "Concurrent data preservation",
+      "target": "Conditional writes protect both new normalized values and changed legacy inputs.",
+      "probe": "Why must the predicate include legacy email as well as normalized_email NULL?",
+      "practice": "Interleave a dual-write and legacy-only write between read and update."
+    },
+    {
+      "id": "integrity",
+      "title": "Conflicts and compatibility",
+      "target": "Preserve legacy data, enforce tenant uniqueness and keep reads compatible without writes.",
+      "probe": "How would existing duplicate data affect creation of a PostgreSQL unique index?",
+      "practice": "Resolve duplicates before index validation and explain lock duration."
+    }
+  ],
+  "follow_up": "Design a reconciliation pass for old writers that still update legacy email after the first high-water run. Define how to distinguish stale normalized values from explicit user edits."
+}

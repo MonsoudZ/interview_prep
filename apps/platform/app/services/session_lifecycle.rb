@@ -4,6 +4,10 @@ class SessionLifecycle
   end
 
   def start
+    MockInterviewWorkflow.start_session!(@session) { |deadline| start_with_deadline(deadline) }
+  end
+
+  def start_with_deadline(deadline)
     @session.with_lock do
       unless %w[draft ready].include?(@session.status)
         raise SessionCommandError, "Session has already started"
@@ -17,7 +21,7 @@ class SessionLifecycle
         end
       end
       @session.update!(status: "active", started_at: Time.current,
-        deadline_at: @session.mode == "assessment" ? @session.exercise_version.duration_minutes.minutes.from_now : nil)
+        deadline_at: @session.mode == "assessment" ? (deadline || @session.exercise_version.duration_minutes.minutes.from_now) : nil)
     end
     @session
   end
