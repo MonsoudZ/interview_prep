@@ -8,7 +8,9 @@ class PracticeContent
     name = { "repository-events" => "rails", "merge-intervals" => "ruby", "webhook-delivery" => "system_design" }[exercise.slug]
     return nil unless name && (exercise.version == 1 || (%w[ruby system_design].include?(name) && exercise.version == 2))
     content_version = %w[ruby system_design].include?(name) && exercise.version == 2 ? 2 : 1
-    YAML.safe_load_file(Rails.root.join("config/practice/#{name}-v#{content_version}.yml"), permitted_classes: [], aliases: false)
+    RailsCurriculum.cache(:practice, "#{name}-v#{content_version}") do
+      YAML.safe_load_file(Rails.root.join("config/practice/#{name}-v#{content_version}.yml"), permitted_classes: [], aliases: false)
+    end
   end
 
   def self.present(session)

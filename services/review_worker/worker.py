@@ -10,6 +10,10 @@ import threading
 import uuid
 from provider import Ollama, ReviewError, check_origin, request, PROMPT_VERSION
 
+def canonical_uuid(value):
+    try: return isinstance(value,str) and str(uuid.UUID(value))==value
+    except ValueError: return False
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--url',default='http://127.0.0.1:3100')
@@ -50,7 +54,9 @@ def main():
             heartbeat()
             leased=request(base,'/internal/reviews/lease',{'worker_id':args.worker_id},key)
             if leased.get('job'):
-                job=leased['job']; finished=threading.Event()
+                job=leased['job']
+                if not canonical_uuid(job.get('id')): raise ValueError('Control plane sent a non-canonical review id; refusing to use it in a path or URL')
+                finished=threading.Event()
                 def keep_alive():
                     while not finished.wait(15):
                         try: heartbeat()

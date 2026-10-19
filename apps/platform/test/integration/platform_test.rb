@@ -92,6 +92,15 @@ class PlatformTest < ActionDispatch::IntegrationTest
     token = body.fetch("csrf_token")
     post "/api/register", params: { name: "Engineer", email: "csrf@example.com", password: PASSWORD }, as: :json, headers: { "X-CSRF-Token" => token }
     assert_response :ok
+    signed_in_token = body.fetch("csrf_token")
+    exercise = ExerciseVersion.find_by!(track: "rails")
+    post "/api/sessions", params: { exercise_id: exercise.id, mode: "guided" }, as: :json
+    assert_response :unprocessable_content
+    post "/api/sessions", params: { exercise_id: exercise.id, mode: "guided" }, as: :json, headers: { "X-CSRF-Token" => token }
+    assert_response :unprocessable_content, "a pre-login token must not survive the session reset"
+    post "/api/sessions", params: { exercise_id: exercise.id, mode: "guided" }, as: :json, headers: { "X-CSRF-Token" => signed_in_token }
+    assert_response :created
+    assert_equal 0, InterviewSession.where.not(id: body.fetch("id")).count
   end
 
   test "login is rate limited" do

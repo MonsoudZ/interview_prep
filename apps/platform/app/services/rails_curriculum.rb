@@ -1,7 +1,9 @@
 # Trusted, published identities resolve local curriculum files; never request paths.
+# Manifests, rubrics and references are immutable published files, so they are read once
+# per process and deep-frozen; callers must copy before changing anything.
 class RailsCurriculum
   def self.entries
-    Dir.glob(Rails.root.join("../../curriculum/rails/*/exercise.json")).sort.map { |path| JSON.parse(File.read(path)) }
+    @entries ||= deep_freeze(Dir.glob(Rails.root.join("../../curriculum/rails/*/exercise.json")).sort.map { |path| JSON.parse(File.read(path)) })
   end
 
   def self.find(slug, version)
@@ -28,12 +30,27 @@ class RailsCurriculum
       Rails.root.join("../../curriculum/rails", exercise.slug, "reference")
     end
     return unless root
-    Dir.glob(root.join("**/*.rb")).sort.to_h { |path| [Pathname.new(path).relative_path_from(root).to_s, File.read(path)] }
+    cache(:references, root.to_s) do
+      Dir.glob(root.join("**/*.rb")).sort.to_h { |path| [Pathname.new(path).relative_path_from(root).to_s, File.read(path)] }
+    end
   end
 
   def self.review(exercise)
     entry = find(exercise.slug, exercise.version)
     return unless entry
-    JSON.parse(File.read(Rails.root.join("../../curriculum/rails", entry.fetch("slug"), "review.json")))
+    cache(:reviews, entry.fetch("slug")) { JSON.parse(File.read(Rails.root.join("../../curriculum/rails", entry.fetch("slug"), "review.json"))) }
+  end
+
+  def self.cache(store, key)
+    (@caches ||= {})[store] ||= {}
+    @caches[store].fetch(key) { @caches[store][key] = deep_freeze(yield) }
+  end
+
+  def self.deep_freeze(value)
+    case value
+    when Hash then value.each_value { |item| deep_freeze(item) }
+    when Array then value.each { |item| deep_freeze(item) }
+    end
+    value.freeze
   end
 end

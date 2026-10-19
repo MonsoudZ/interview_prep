@@ -10,7 +10,7 @@ import threading
 import unittest
 
 class WorkerTransportTests(unittest.TestCase):
-    def test_local_worker_delivers_a_frozen_packet_and_canonical_model_identity(self):
+    def run_worker(self, job_id):
         key = 'synthetic-transport-key-' + 'x' * 32
         worker_id = '77777777-7777-4777-8777-777777777777'
         digest = 'a' * 64
@@ -33,7 +33,7 @@ class WorkerTransportTests(unittest.TestCase):
                     return
                 test.assertEqual('Bearer ' + key, self.headers.get('Authorization'))
                 if self.path == '/internal/reviews/lease':
-                    self.reply({'job': {'id': 'transport-fixture', 'revision': 'frozen-revision',
+                    self.reply({'job': {'id': job_id, 'revision': 'frozen-revision',
                                'prompt_version': 'senior-review-v1', 'input': packet}, 'lease_token': 'fixture-lease'})
                 else: self.reply({'ok': True})
             def reply(self, body):
@@ -56,20 +56,30 @@ class WorkerTransportTests(unittest.TestCase):
                             '--model', 'transport-fixture:latest', '--url', f'http://127.0.0.1:{app.server_port}',
                             '--ollama', f'http://127.0.0.1:{model.server_port}'],
                             env={**os.environ, 'INTERVIEW_REVIEW_BRIDGE_KEY': key}, capture_output=True, text=True, timeout=20)
-                self.assertEqual(0, result.returncode, result.stderr)
                 self.assertNotIn(key, result.stdout + result.stderr)
-                self.assertEqual([], list((root / '.state').glob('delivery-*.json')))
-            heartbeat = next(body for path, body in seen if path.endswith('heartbeat'))
-            delivered = next(body for path, body in seen if path.endswith('/result'))
-            self.assertEqual('sha256:' + digest, heartbeat['model_digest'])
-            self.assertEqual('sha256:' + digest, delivered['model_digest'])
-            self.assertEqual('frozen-revision', delivered['revision'])
-            self.assertEqual('fixture-lease', delivered['lease_token'])
-            self.assertEqual('completed', delivered['status'])
-            self.assertEqual(report, delivered['report'])
-            self.assertEqual(1, len([path for path, _ in seen if path == '/api/chat']))
+                return result, seen, key, report, digest, sorted(path.name for path in (root / '.state').glob('*.json'))
         finally:
             for server in (app, model): server.shutdown(); server.server_close()
             for thread in threads: thread.join(timeout=2)
+
+    def test_local_worker_delivers_a_frozen_packet_and_canonical_model_identity(self):
+        result, seen, key, report, digest, state_files = self.run_worker('5b1c2a8e-9d3f-4c6b-8a7e-1f2d3c4b5a69')
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual([], state_files)
+        heartbeat = next(body for path, body in seen if path.endswith('heartbeat'))
+        delivered = next(body for path, body in seen if path.endswith('/result'))
+        self.assertEqual('sha256:' + digest, heartbeat['model_digest'])
+        self.assertEqual('sha256:' + digest, delivered['model_digest'])
+        self.assertEqual('frozen-revision', delivered['revision'])
+        self.assertEqual('fixture-lease', delivered['lease_token'])
+        self.assertEqual('completed', delivered['status'])
+        self.assertEqual(report, delivered['report'])
+        self.assertEqual(1, len([path for path, _ in seen if path == '/api/chat']))
+
+    def test_non_canonical_review_id_never_reaches_a_path_or_callback(self):
+        result, seen, key, report, digest, state_files = self.run_worker('../../etc/transport-fixture')
+        self.assertNotEqual(0, result.returncode)
+        self.assertEqual([], state_files)
+        self.assertEqual([], [path for path, _ in seen if path == '/api/chat' or path.endswith('/result')])
 
 if __name__ == '__main__': unittest.main()

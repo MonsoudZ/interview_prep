@@ -83,6 +83,8 @@ Worker watchdog: run `worker.py reap` independently at least once a minute. Cont
 
 ## Checks
 
+On a fresh clone, create the test database first with `RAILS_ENV=test ruby bin/rails db:prepare`; without it `rails test` stops with "Migrations are pending".
+
 ```sh
 ruby bin/rails test
 node --check public/app.js
