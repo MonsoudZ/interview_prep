@@ -1,0 +1,49 @@
+version: webhook-design-review-v1
+hints:
+  - title: "1 · Establish boundaries before components"
+    body: |
+      Write down who sends events, who configures endpoints, and who inspects outcomes. Separate accepted events, delivery records, and individual attempts. Specify the point after which an accepted event must survive a machine failure.
+
+      Estimate normal and peak delivery rates using fan-out. Do not confuse the first-attempt latency target for healthy endpoints with eventual successful delivery to unhealthy endpoints.
+  - title: "2 · Follow one event end to end"
+    body: |
+      Sketch authenticated ingestion → durable acceptance → subscription matching → delivery scheduling → bounded workers → outcome storage. A database-backed queue or a broker can both be reasonable if claiming, durability, and recovery are explained.
+
+      For each arrow ask: can this step fail, can it repeat, what state survives, and who retries? Separate a stable delivery ID from an attempt ID. At-least-once attempts mean consumers need an idempotency strategy.
+  - title: "3 · Stress the system with one unhealthy tenant"
+    body: |
+      A large endpoint fails for two hours. Model growing retries, bounded exponential backoff with jitter, per-tenant concurrency, dispatch fairness, attempt timeouts, retry expiry, and operator inspection. Explain worker death after a successful HTTP response but before recording success.
+
+      For customer-supplied destinations, discuss private-address blocking, DNS changes, redirects, request signing, and secret rotation. Show metrics for queue age, first-attempt latency, retry volume, and per-tenant failures. Keep optional multi-region work separate from the single-region requirement.
+criteria:
+  - id: requirements
+    title: Requirements and capacity
+    target: Functional boundaries, latency/durability goals, fan-out, traffic peaks, and retention assumptions are explicit. Estimates distinguish events from attempts and payload storage from metadata.
+    probe: At peak, how many initial deliveries are scheduled per second before retries? What does the ten-second goal measure?
+    practice: Estimate traffic, payload volume, and retained metadata, stating every assumption and unit.
+  - id: durability
+    title: Durable acceptance and recovery
+    target: Acknowledgment follows a defined durable boundary. Worker claiming, leases, crash recovery, and replay semantics preserve accepted work.
+    probe: Walk through a crash immediately before acknowledgment and one after sending HTTP but before recording the outcome.
+    practice: Draw a sequence diagram and mark each durable write and every point that can produce a duplicate.
+  - id: delivery
+    title: Delivery semantics and data model
+    target: Events, subscriptions, deliveries, and attempts have clear identities and states. Retries, expiry, permanent failures, duplicate handling, and authorized inspection are specified.
+    probe: Which identifier can a receiver use to deduplicate? Does a replay reuse it or create a new logical delivery?
+    practice: Write example rows for one event, three deliveries, and a retried attempt, then define the state transitions.
+  - id: fairness
+    title: Backpressure and tenant fairness
+    target: Retry growth and slow endpoints cannot monopolize healthy tenants. Concurrency, timeouts, and scheduling limits are bounded and reasoned.
+    probe: What happens to healthy tenants when one large customer's endpoint is down for two hours?
+    practice: Trace the outage at normal and peak load, including the recovery surge and oldest queued work.
+  - id: security
+    title: Destination and tenant security
+    target: Tenant authorization, destination validation, SSRF defenses, signing, redirect/DNS behavior, and secret handling have concrete controls.
+    probe: What if a configured hostname resolves to a private address only on a later retry?
+    practice: Follow destination resolution and connection step by step; identify where addresses, redirects, and credentials are checked.
+  - id: operations
+    title: Observability and tradeoffs
+    target: Metrics and operational tools expose latency, queue age, retries, and per-tenant failures. Component choices address stated scale and explain tradeoffs without requiring a particular vendor.
+    probe: How would an operator distinguish queue saturation from a customer's slow endpoint?
+    practice: Define three actionable alerts and the diagnostic view an on-call engineer would use for each.
+follow_up: A customer now requests ordered delivery per repository. Define what ordering means during retries and replay, then explain partitioning, head-of-line blocking, and its effect on fairness. This is a new requirement.

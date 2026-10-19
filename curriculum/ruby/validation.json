@@ -1,0 +1,34 @@
+[
+  {
+    "variant": "starter",
+    "summary": "12 runs, 13 assertions, 12 failures, 0 errors, 0 skips"
+  },
+  {
+    "variant": "reference",
+    "summary": "12 runs, 112 assertions, 0 failures, 0 errors, 0 skips"
+  },
+  {
+    "variant": "shrinking_finish",
+    "summary": "12 runs, 13 assertions, 4 failures, 0 errors, 0 skips"
+  },
+  {
+    "variant": "touching_not_merged",
+    "summary": "12 runs, 15 assertions, 5 failures, 0 errors, 0 skips"
+  },
+  {
+    "variant": "mutates_input",
+    "summary": "12 runs, 111 assertions, 1 failures, 0 errors, 0 skips"
+  },
+  {
+    "variant": "no_sort",
+    "summary": "12 runs, 13 assertions, 10 failures, 0 errors, 0 skips"
+  },
+  {
+    "variant": "syntax_only",
+    "preparation_succeeded": true
+  },
+  {
+    "variant": "syntax_error",
+    "preparation_succeeded": false
+  }
+]

@@ -1,0 +1,3 @@
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+* * * * * root /usr/bin/python3 /opt/interview/services/execution_worker/worker.py reap > /var/log/interview-worker-reap.log 2>&1

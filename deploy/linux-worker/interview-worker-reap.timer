@@ -1,0 +1,11 @@
+[Unit]
+Description=Watch for expired interview execution containers
+
+[Timer]
+OnBootSec=20
+OnUnitActiveSec=30
+AccuracySec=5
+Unit=interview-worker-reap.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,48 @@
+{
+  "version": "delivery-retries-review-v1",
+  "hints": [
+    {
+      "title": "1 \u00b7 Draw the transition table",
+      "body": "List each transport outcome, the next status, whether attempts increases, and whether to raise. A terminal record must return before calling transport."
+    },
+    {
+      "title": "2 \u00b7 Commit before signaling retry",
+      "body": "For a fictional ImportJob: update!(attempts: attempts + 1, status: \"pending\"); raise Retryable. Raising inside a transaction that surrounds the update can roll back the very evidence you need to persist."
+    },
+    {
+      "title": "3 \u00b7 Catch only the expected transport exception",
+      "body": "Rescue DeliveryTransport::Unavailable explicitly. Keep programming and database failures visible. Success clears last_error; an outage clears last_http_status. Confirm a retry uses reloaded persisted state and the third attempt stops."
+    }
+  ],
+  "criteria": [
+    {
+      "id": "transitions",
+      "title": "State-machine correctness",
+      "target": "All published HTTP classes and Unavailable produce the correct durable status, attempt count, and exception behavior.",
+      "probe": "Walk through 503, 429, then 200. What is persisted each time?",
+      "practice": "Build a transition table and convert each row into a test."
+    },
+    {
+      "id": "duplicates",
+      "title": "Duplicate and retry behavior",
+      "target": "Terminal/missing jobs are no-ops, retries stop after three attempts, and successful retries clear stale errors.",
+      "probe": "When can a crash still cause a duplicate remote effect?",
+      "practice": "Sketch the remote-send/local-commit crash window."
+    },
+    {
+      "id": "failures",
+      "title": "Failure classification",
+      "target": "Only expected transport outages are normalized; programming/storage errors remain visible.",
+      "probe": "What would rescue StandardError hide here?",
+      "practice": "Practice distinct handling for client, transient transport, and programming failures."
+    },
+    {
+      "id": "operations",
+      "title": "Operational reasoning",
+      "target": "Explain scheduler responsibility, backoff, evidence retention, and the limits of sequential duplicate suppression.",
+      "probe": "How would concurrent workers claim a record safely?",
+      "practice": "Design a bounded retry schedule and an operator replay policy as a separate extension."
+    }
+  ],
+  "follow_up": "Add durable scheduling, jittered backoff, worker claiming, a dead-letter view, and a stable downstream idempotency key. Explain crashes before and after remote acceptance. No exactly-once guarantee is implied."
+}

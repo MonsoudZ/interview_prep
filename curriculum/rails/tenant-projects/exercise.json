@@ -1,0 +1,14 @@
+{
+  "slug": "tenant-projects",
+  "title": "Repair Tenant Authorization",
+  "version": 1,
+  "operation": "rails.tenant-projects.v1",
+  "duration_minutes": 55,
+  "summary": "Repair a working but unsafe project API. Enforce token authentication, tenant isolation, roles, and safe updates without leaking other tenants\u2019 records.",
+  "skills": [
+    "Authorization",
+    "Existing code",
+    "Request tests"
+  ],
+  "difficulty": "Senior \u00b7 debugging"
+}

@@ -1,0 +1,134 @@
+[
+  {
+    "exercise": "activity-feed",
+    "variant": "prepare",
+    "summary": "READY"
+  },
+  {
+    "exercise": "activity-feed",
+    "variant": "starter",
+    "summary": "12 runs, 34 assertions, 11 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "activity-feed",
+    "variant": "reference",
+    "summary": "12 runs, 90 assertions, 0 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "activity-feed",
+    "variant": "mutation",
+    "defect": "Post.where(organization_id: organization.to_i)",
+    "summary": "12 runs, 79 assertions, 8 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "activity-feed",
+    "variant": "mutation",
+    "defect": ".preload(:author)",
+    "summary": "12 runs, 90 assertions, 1 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "activity-feed",
+    "variant": "mutation",
+    "defect": "counts.fetch(post.id, 0)",
+    "summary": "12 runs, 90 assertions, 1 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "delivery-retries",
+    "variant": "prepare",
+    "summary": "READY"
+  },
+  {
+    "exercise": "delivery-retries",
+    "variant": "starter",
+    "summary": "12 runs, 15 assertions, 10 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "delivery-retries",
+    "variant": "reference",
+    "summary": "12 runs, 64 assertions, 0 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "delivery-retries",
+    "variant": "mutation",
+    "defect": "return unless delivery && delivery.status == \"pending\"",
+    "summary": "12 runs, 59 assertions, 3 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "delivery-retries",
+    "variant": "mutation",
+    "defect": "code != 429",
+    "summary": "12 runs, 62 assertions, 1 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "delivery-retries",
+    "variant": "mutation",
+    "defect": "rescue DeliveryTransport::Unavailable",
+    "summary": "12 runs, 62 assertions, 1 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "idempotent-checkout",
+    "variant": "prepare",
+    "summary": "READY"
+  },
+  {
+    "exercise": "idempotent-checkout",
+    "variant": "starter",
+    "summary": "12 runs, 11 assertions, 11 failures, 1 errors, 0 skips"
+  },
+  {
+    "exercise": "idempotent-checkout",
+    "variant": "reference",
+    "summary": "12 runs, 119 assertions, 0 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "idempotent-checkout",
+    "variant": "mutation",
+    "defect": "existing = Order.find_by(customer_id: customer_id, idempotency_key: key)",
+    "summary": "12 runs, 117 assertions, 1 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "idempotent-checkout",
+    "variant": "mutation",
+    "defect": "Product.transaction do",
+    "summary": "12 runs, 118 assertions, 1 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "idempotent-checkout",
+    "variant": "mutation",
+    "defect": "add_index :orders, [:customer_id, :idempotency_key], unique: true",
+    "summary": "12 runs, 118 assertions, 1 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "tenant-projects",
+    "variant": "prepare",
+    "summary": "READY"
+  },
+  {
+    "exercise": "tenant-projects",
+    "variant": "starter",
+    "summary": "12 runs, 19 assertions, 9 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "tenant-projects",
+    "variant": "reference",
+    "summary": "12 runs, 153 assertions, 0 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "tenant-projects",
+    "variant": "mutation",
+    "defect": "Project.where(organization_id: @user.organization_id)",
+    "summary": "12 runs, 118 assertions, 4 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "tenant-projects",
+    "variant": "mutation",
+    "defect": "unless @user.role == \"editor\"",
+    "summary": "12 runs, 148 assertions, 1 failures, 0 errors, 0 skips"
+  },
+  {
+    "exercise": "tenant-projects",
+    "variant": "mutation",
+    "defect": "project.update!(name: name)",
+    "summary": "12 runs, 151 assertions, 1 failures, 0 errors, 0 skips"
+  }
+]

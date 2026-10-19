@@ -1,0 +1,11 @@
+# Configure values using Railway Variables or your shell's secure environment.
+# This is a template, not an automatically loaded dotenv file. Never commit real keys.
+INTERVIEW_RAILWAY_EXECUTION_ENABLED=0
+RAILWAY_API_TOKEN=
+RAILWAY_ENVIRONMENT_ID=
+INTERVIEW_WORKER_ID=
+INTERVIEW_CONTROL_PLANE_URL=https://YOUR-INTERVIEW-APP
+INTERVIEW_WORKER_BRIDGE_KEY=
+INTERVIEW_WORKER_SIGNING_KEY=
+INTERVIEW_RAILWAY_DAILY_JOB_LIMIT=10
+INTERVIEW_WORKER_STATE=/var/lib/interview-worker

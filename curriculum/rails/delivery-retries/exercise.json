@@ -1,0 +1,14 @@
+{
+  "slug": "delivery-retries",
+  "title": "Retry-Safe Delivery Job",
+  "version": 1,
+  "operation": "rails.delivery-retries.v1",
+  "duration_minutes": 60,
+  "summary": "Finish a background delivery job with explicit state transitions, bounded retry behavior, duplicate suppression, and durable attempt evidence.",
+  "skills": [
+    "Background jobs",
+    "Failure recovery",
+    "At-least-once delivery"
+  ],
+  "difficulty": "Senior \u00b7 background jobs"
+}

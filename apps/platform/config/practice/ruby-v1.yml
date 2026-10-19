@@ -1,0 +1,44 @@
+version: ruby-intervals-review-v1
+hints:
+  - title: "1 · Find the invariant"
+    body: |
+      Draw unsorted, nested, touching, and disjoint intervals on a number line. What ordering would let you decide whether the next interval can extend the most recent merged interval?
+
+      State the invariant in words before coding: what does the result represent after processing the first k intervals?
+  - title: "2 · Use sorting and a scan"
+    body: |
+      Sort by the start endpoint. Keep a result containing the merged portion of what you have scanned. Compare the next start with the last merged finish: touching endpoints count as overlap.
+
+      Remember that changing a nested array can mutate the caller's input even if the outer array was sorted into a new array. Copy any interval you will modify.
+  - title: "3 · Protect the farthest endpoint"
+    body: |
+      On overlap, the finish must remain the greater of the two finishes. Otherwise [[1, 10], [2, 3]] incorrectly shrinks to [[1, 3]]. On a gap, append an independent interval.
+
+      Manually trace [], [[2, 2]], duplicates, negative endpoints, touching intervals, and a long interval containing several short ones. Compare the original input after the call. Sorting takes O(n log n) time; the scan is O(n). Explain output storage separately from sorting implementation costs.
+criteria:
+  - id: correctness
+    title: Correctness and invariant
+    target: The output covers exactly the input, merges touching/overlapping intervals, and is sorted and disjoint. The explanation gives a valid scan invariant.
+    probe: Why is comparing only the last merged interval sufficient after sorting?
+    practice: Trace a proof alongside the implementation using one nested and one disjoint interval.
+  - id: boundaries
+    title: Boundary cases
+    target: Empty input, duplicates, nesting, negative endpoints, zero-length intervals, and touching endpoints are handled.
+    probe: Trace [[1, 10], [2, 3], [10, 10], [12, 12]] without executing code.
+    practice: Write the expected result for six boundary cases before running any implementation.
+  - id: mutation
+    title: Ruby behavior and input ownership
+    target: Neither the outer input array nor its interval arrays are mutated. Ruby collection methods and copies are chosen deliberately.
+    probe: Does sort_by copy the nested arrays? Where could aliasing change the input?
+    practice: Call the function with frozen input and frozen nested intervals when a runner is available, then explain the ownership of each returned array.
+  - id: complexity
+    title: Complexity and scale
+    target: The algorithm fits 100,000 intervals; sorting and scanning costs are explained, with output allocation distinguished from auxiliary space.
+    probe: What changes if intervals arrive already sorted? What if they form an unbounded stream?
+    practice: Annotate the cost of each phase and adapt the scan to presorted input without sorting again.
+  - id: verification
+    title: Verification and communication
+    target: Examples and counterexamples support the reasoning; any execution claim points to an actual run. Untested code is identified explicitly.
+    probe: Which counterexample would disprove your overlap branch, and how would you explain the fix?
+    practice: Explain the approach, invariant, edge cases, and complexity aloud in three minutes, then implement without referring to the explanation.
+follow_up: The input now arrives in sorted order. Describe the linear scan and what can be emitted safely before the full input arrives. Treat the streaming extension separately from the original batch contract.

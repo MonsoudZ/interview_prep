@@ -1,0 +1,67 @@
+version: rails-events-review-v1
+hints:
+  - title: "1 · Map the request before writing Rails code"
+    body: |
+      Work through one vertical slice: route → controller action → model → database → JSON response. Start with GET /events returning an empty array, then create one valid event, then handle invalid input.
+
+      Read the visible test for each slice. Write down the verb/path, input shape, successful status, failure status, and persistence effect. A test failure is a specific contract to implement, not a signal to rewrite the whole repository.
+  - title: "2 · Recall the Rails patterns with a different resource"
+    body: |
+      Example for a fictional Bookmark API (adapt the pattern to this exercise):
+
+      # config/routes.rb
+      resources :bookmarks, only: [:index, :show, :create]
+
+      # app/models/bookmark.rb
+      class Bookmark < ApplicationRecord
+        validates :url, presence: true
+      end
+
+      # Inside BookmarksController#create
+      bookmark = Bookmark.new(bookmark_params)
+      if bookmark.save
+        render json: { id: bookmark.id, url: bookmark.url }, status: :created
+      else
+        render json: { errors: bookmark.errors.to_hash }, status: :unprocessable_entity
+      end
+
+      # Private controller method
+      def bookmark_params
+        params.require(:bookmark).permit(:url)
+      end
+
+      This illustrates strong parameters and save/render branching. It is not the complete Events solution: missing envelopes, strict integer parsing, timestamps, and lookup errors need explicit handling for the published contract.
+  - title: "3 · Debug boundaries in small steps"
+    body: |
+      For creation: validate the input type before coercing it; verify a failed save returns 422 and inserts nothing. Permit only the published inputs, leaving generated IDs under database control. Serialize exactly the required fields and the requested UTC timestamp precision.
+
+      For lookup/filtering: reject malformed or non-positive decimal IDs instead of relying on to_i ("7oops".to_i is 7). Distinguish an invalid filter (400), an unknown valid filter ([]), and a missing event (404). Keep listings explicitly ordered by ID.
+
+      Run the smallest failing test after each change, then the full visible suite. When stuck, describe the failing request, expected response, observed response, and the single branch you will change.
+criteria:
+  - id: http_contract
+    title: HTTP behavior and response contracts
+    target: List, lookup, filter, and create match the published statuses and JSON shape. Invalid requests have the required error envelope.
+    probe: Trace a valid create, a rejected create, and a missing lookup. Where does each status originate?
+    practice: Rebuild a three-action JSON controller from an empty file, then add one failure path at a time.
+  - id: validation
+    title: Validation and persistence safety
+    target: Invalid fields do not persist; IDs and timestamps obey the strict input rules; client-supplied IDs cannot replace generated IDs.
+    probe: What happens with actor_id = "7oops", a missing event envelope, and a timestamp without an offset?
+    practice: Make a request/validation matrix and implement the malformed-input cases before adding more endpoints.
+  - id: rails_structure
+    title: Rails implementation and recall
+    target: Responsibilities are understandable across routes, controller, and model. The solution uses appropriate Rails patterns without requiring extra architectural layers.
+    probe: Explain the route-to-response flow and why each validation lives where it does.
+    practice: Write routes, strong parameters, a save/render branch, and a model validation from memory; compare with the analogous example afterward.
+  - id: verification
+    title: Verification and debugging
+    target: Claims are supported by actual test runs on the submitted revision, including relevant negative cases. A passing in-process suite alone is not proof against tampering.
+    probe: Which observed failure changed your implementation? Which contract boundaries are still unverified?
+    practice: Predict a failing test's output before running it, fix the smallest cause, then rerun the full suite.
+  - id: judgment
+    title: Scope and engineering judgment
+    target: Required behavior is completed before optional abstractions. Database constraints and concurrency are explained as follow-ups rather than invented exercise requirements.
+    probe: With ten minutes left, what would you finish first and what would you explicitly defer?
+    practice: Do a timed vertical slice and reserve the final five minutes for negative cases and a concise handoff.
+follow_up: Explain how you would add an idempotent create endpoint. Define the key scope, concurrent duplicate behavior, stored response, and database constraint before choosing an abstraction. This is an extension, not an original requirement.

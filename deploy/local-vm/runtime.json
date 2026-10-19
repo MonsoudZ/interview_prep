@@ -1,0 +1,49 @@
+{
+  "verifiedOn": "2026-10-18",
+  "profile": "interview",
+  "vm": {
+    "type": "vz",
+    "architecture": "aarch64",
+    "cpus": 2,
+    "memoryGiB": 4,
+    "dataDiskGiB": 8,
+    "rootDiskGiB": 6,
+    "macFolderMounts": false,
+    "sshAgentForwarding": false
+  },
+  "linux": "Ubuntu 24.04.4 LTS / Linux 6.8.0-117-generic",
+  "dockerDaemon": "29.5.2",
+  "gvisor": "release-20261012.0",
+  "gvisorArchiveSha512": "3459ca3e496465e5b6a1318563ede4bb079bdf11ae93f4bb8d71df3cd2f19bfa6db7c1035d2f9e97b4f4e57c298a4f18b42af7297c048ec7e14ec819223684e4",
+  "rubyBase": "ruby:4.0.1-slim@sha256:939bb2710ba0a49ffdba9470b4e562c9dfc5ee6718ba5a5214f1d421d0414d29",
+  "imageId": "sha256:c9f70b151331d4153ff622d41a4d1ff92e4db3d2a86d3878e852922e353d639f",
+  "dependencyLockSha256": "0ddcf2ff2de305df59d49d89597bddbc731e5445dddc3553272e06295decf3a1",
+  "buildSeconds": 0.485,
+  "liveIntegration": {
+    "runs": 3,
+    "assertions": 192,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "starter": {
+    "tests": 12,
+    "failures": 12
+  },
+  "reference": {
+    "tests": 12,
+    "assertions": 158,
+    "failures": 0,
+    "errors": 0
+  },
+  "independentWatchdogVerified": true,
+  "productionIsolationCertified": false,
+  "previousImageId": "sha256:f1c5a91061b93d2a7a4208c0ddb59a3fb35d37c8e23d44628c6911d30357ad8a",
+  "curriculum": {
+    "rails": 5,
+    "ruby": 1,
+    "railsTestGroups": 60,
+    "rubyTestGroups": 12,
+    "referenceValidation": "curriculum/rails/validation.json and curriculum/ruby/validation.json"
+  }
+}

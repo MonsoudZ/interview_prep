@@ -1,0 +1,20 @@
+[Unit]
+Description=Remove expired Interview Studio containers
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=interview-worker
+Group=interview-worker
+SupplementaryGroups=docker
+WorkingDirectory=/opt/interview-prep
+Environment=DOCKER_CONFIG=/var/lib/interview-worker/docker
+StateDirectory=interview-worker
+StateDirectoryMode=0700
+ExecStart=/usr/bin/python3 services/execution_worker/worker.py reap
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+TimeoutStartSec=30

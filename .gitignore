@@ -1,0 +1,29 @@
+# Machine-local configuration, credentials, and runtime state
+**/.state/
+**/.env
+**/.env.*
+!**/.env.example
+**/.bundle/
+**/config/master.key
+**/config/credentials/*.key
+**/*.pem
+**/*.p12
+.DS_Store
+.agents/
+.codex/
+.aws/
+
+# Practice databases, logs, dependencies, and build caches
+**/storage/
+**/*.sqlite3
+**/*.sqlite3-*
+**/log/
+**/tmp/
+**/node_modules/
+**/__pycache__/
+**/*.py[cod]
+**/.work/
+
+# Local exports and verification output
+/artifacts/
+/experiments/rails-runtime/results/

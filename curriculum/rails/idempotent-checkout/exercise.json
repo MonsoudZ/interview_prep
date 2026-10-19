@@ -1,0 +1,14 @@
+{
+  "slug": "idempotent-checkout",
+  "title": "Idempotent Inventory Checkout",
+  "version": 1,
+  "operation": "rails.idempotent-checkout.v1",
+  "duration_minutes": 65,
+  "summary": "Implement checkout with inventory accounting, request-key replay, conflict handling, and transactional rollback in a supplied Rails repository.",
+  "skills": [
+    "Transactions",
+    "Idempotency",
+    "Database constraints"
+  ],
+  "difficulty": "Senior \u00b7 data integrity"
+}

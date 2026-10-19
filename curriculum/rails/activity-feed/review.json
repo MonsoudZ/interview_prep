@@ -1,0 +1,48 @@
+{
+  "version": "activity-feed-review-v1",
+  "hints": [
+    {
+      "title": "1 \u00b7 Measure the whole response",
+      "body": "Capture sql.active_record around the request, including serialization. Count queries as the page size grows. Determine separately whether tenant filtering and pagination happen before records are loaded."
+    },
+    {
+      "title": "2 \u00b7 Load relationships deliberately",
+      "body": "For a fictional Article list: Article.where(team_id: identity).order(id: :desc).limit(limit + 1).preload(:writer). Query related counts in one GROUP BY keyed by page IDs. This avoids both per-row lookups and loading every child record."
+    },
+    {
+      "title": "3 \u00b7 Use one extra row for the next cursor",
+      "body": "Fetch limit + 1 to detect another page; return only limit and use its final ID as the next cursor if more exist. A valid cursor means id < cursor, not offset. Check exactly-full pages, empty pages, malformed inputs, and multiple authors."
+    }
+  ],
+  "criteria": [
+    {
+      "id": "contract",
+      "title": "Pagination and response correctness",
+      "target": "Descending cursor pages preserve every item exactly once on a stable dataset; fields and counts remain exact.",
+      "probe": "Why is next_cursor nil on an exactly full final page?",
+      "practice": "Implement keyset pagination with a limit-plus-one query."
+    },
+    {
+      "id": "scope",
+      "title": "Identity and input boundaries",
+      "target": "Tenant identity comes only from the supplied gateway header and malformed pagination is rejected.",
+      "probe": "Could an arbitrary valid cursor expose another tenant?",
+      "practice": "Test cross-tenant data mixed among page boundaries."
+    },
+    {
+      "id": "queries",
+      "title": "Bounded data access",
+      "target": "At most four data SELECTs; SQL bounds posts; comments are aggregated without individual instantiation.",
+      "probe": "How can a constant query count still have unbounded memory cost?",
+      "practice": "Compare query count, rows scanned, and records instantiated."
+    },
+    {
+      "id": "judgment",
+      "title": "Performance investigation",
+      "target": "Claims cite measured queries and explain indexes/query plans without replacing evidence with a timing guess.",
+      "probe": "Which indexes would support the tenant cursor and comment count queries?",
+      "practice": "Explain an EXPLAIN plan and distinguish local test evidence from production latency."
+    }
+  ],
+  "follow_up": "Recommend and measure indexes on (organization_id, id) and comments.post_id. Discuss cursor consistency under inserts/deletes, query plans at millions of rows, and when denormalized counters are worth their write complexity."
+}

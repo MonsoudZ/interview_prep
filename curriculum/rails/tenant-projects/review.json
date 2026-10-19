@@ -1,0 +1,48 @@
+{
+  "version": "tenant-projects-review-v1",
+  "hints": [
+    {
+      "title": "1 \u00b7 Find the trust boundary",
+      "body": "Trace one request with the supplied token. The organization must come from User.find_by(api_token: ...). Write the cross-tenant lookup test before changing every action."
+    },
+    {
+      "title": "2 \u00b7 Scope before looking up",
+      "body": "For a fictional Document API: current_user.organization.documents.find_by(id: ...) keeps ownership in the query. A role check alone does not establish ownership. Use the same scoped lookup for read and write."
+    },
+    {
+      "title": "3 \u00b7 Avoid coercion and mass assignment",
+      "body": "Reject malformed IDs rather than using to_i. Validate the project envelope and name type before assigning. Permit only name; do not merge tenant attributes from request input. Compare the persisted record after each rejected update."
+    }
+  ],
+  "criteria": [
+    {
+      "id": "boundary",
+      "title": "Tenant boundary",
+      "target": "Every query is scoped using authenticated identity; cross-tenant records consistently return 404.",
+      "probe": "Where could a caller influence organization identity?",
+      "practice": "Repair a cross-tenant read and write from an unfamiliar controller."
+    },
+    {
+      "id": "authorization",
+      "title": "Role and authentication behavior",
+      "target": "Missing tokens return 401; viewers cannot write; ownership resolution precedes role checks.",
+      "probe": "Why should a viewer receive 404 rather than 403 for another tenant?",
+      "practice": "Create an endpoint-by-role-by-ownership matrix before coding."
+    },
+    {
+      "id": "safe_updates",
+      "title": "Input and persistence safety",
+      "target": "Invalid updates do not persist and tenant/primary-key attributes cannot be reassigned.",
+      "probe": "How would strong parameters alone fail to validate the name type?",
+      "practice": "Practice checking envelopes, field types, and persisted side effects."
+    },
+    {
+      "id": "debugging",
+      "title": "Evidence and incident judgment",
+      "target": "Demonstrate the original leak, cite the fix and actual tests; avoid claiming this is production-ready authentication.",
+      "probe": "What logs and audit history would you investigate after discovering a leak?",
+      "practice": "Give a two-minute incident handoff with remaining risks."
+    }
+  ],
+  "follow_up": "Add token revocation and multi-organization membership. Define authorization at membership boundaries; discuss audit trails and index/constraint choices. These are extensions, not requirements."
+}

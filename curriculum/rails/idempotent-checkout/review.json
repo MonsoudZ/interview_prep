@@ -1,0 +1,48 @@
+{
+  "version": "idempotent-checkout-review-v1",
+  "hints": [
+    {
+      "title": "1 \u00b7 Define replay before writing code",
+      "body": "Write a table for first request, identical retry, changed retry, and another customer with the same key. A retry must look up the old order before testing current inventory."
+    },
+    {
+      "title": "2 \u00b7 Make the database change atomic",
+      "body": "A fictional reservation: Product.transaction do; decrement stock conditionally; Reservation.create!(...); end. A later exception must roll back the earlier write. Use a compound unique index for scope, rather than only a model uniqueness validation."
+    },
+    {
+      "title": "3 \u00b7 Separate guarantees",
+      "body": "Use a conditional UPDATE with stock >= quantity and check the affected row count. Put the order and inventory change in the same transaction. Database check constraints defend writes that bypass validations. Explain duplicate-key races separately; this SQLite exercise does not certify multi-process correctness."
+    }
+  ],
+  "criteria": [
+    {
+      "id": "replay",
+      "title": "Replay semantics",
+      "target": "Identical requests return the original order, changed payloads conflict, and keys are customer-scoped.",
+      "probe": "Why must a replay work after inventory reaches zero?",
+      "practice": "Write the retry state table from memory."
+    },
+    {
+      "id": "atomicity",
+      "title": "Atomic persistence",
+      "target": "Stock and order commit together; unexpected failures propagate and roll back; rejected requests reserve no key.",
+      "probe": "What happens if the database fails between decrement and order insert?",
+      "practice": "Inject a write failure and inspect both persisted records."
+    },
+    {
+      "id": "constraints",
+      "title": "Database defenses",
+      "target": "Composite uniqueness, nonnegative stock, and positive quantity hold even for direct writes.",
+      "probe": "Why is validates uniqueness insufficient under concurrent requests?",
+      "practice": "Translate a correctness invariant into a unique index or check constraint."
+    },
+    {
+      "id": "judgment",
+      "title": "Scope and concurrency judgment",
+      "target": "State which guarantees tests demonstrate and what remains for concurrent PostgreSQL execution.",
+      "probe": "How would you recover a lost response during simultaneous retries?",
+      "practice": "Sketch a concurrent timeline and a database-specific recovery approach."
+    }
+  ],
+  "follow_up": "Design concurrent checkout in PostgreSQL: same-key races, lock ordering, deadlock recovery, uniqueness errors, and retry boundaries. No external payment happens inside a retryable database transaction."
+}

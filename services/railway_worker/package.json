@@ -1,0 +1,13 @@
+{
+  "name": "interview-railway-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "start": "node cli.mjs bridge",
+    "doctor": "node cli.mjs doctor"
+  },
+  "dependencies": { "railway": "3.16.0" }
+}

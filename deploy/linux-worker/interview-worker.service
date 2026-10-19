@@ -1,0 +1,34 @@
+[Unit]
+Description=Interview Studio execution worker bridge
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=interview-worker
+Group=interview-worker
+SupplementaryGroups=docker
+WorkingDirectory=/opt/interview-prep
+EnvironmentFile=/etc/interview-worker/environment
+Environment=DOCKER_CONFIG=/var/lib/interview-worker/docker
+ExecStart=/usr/bin/python3 services/execution_worker/bridge.py --url ${INTERVIEW_CONTROL_PLANE_URL} --worker-id ${INTERVIEW_WORKER_ID} --state /var/lib/interview-worker
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=25
+StateDirectory=interview-worker
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/interview-worker
+LimitNOFILE=4096
+TasksMax=256
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+{
+  "slug": "activity-feed",
+  "title": "Repair a Slow Activity Feed",
+  "version": 1,
+  "operation": "rails.activity-feed.v1",
+  "duration_minutes": 60,
+  "summary": "Optimize a working feed with cursor pagination and bounded database queries while preserving response shape, ordering, and tenant boundaries.",
+  "skills": [
+    "SQL",
+    "Pagination",
+    "N+1 queries"
+  ],
+  "difficulty": "Senior \u00b7 performance"
+}
