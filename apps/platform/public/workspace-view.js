@@ -2,7 +2,7 @@ import { esc, icon, modeName, renderBrief } from "./ui.js";
 import { renderSavedFeedback } from "./rework.js";
 export function workspaceMarkup(session) {
   const design = !!session.files["diagram.json"];
-  return `<main class="workspace ${design ? "is-design" : ""}">
+  return `<main class="workspace ${design ? "is-design" : session.track === "behavioral" ? "is-behavioral" : ""}">
     <header class="workspace-head">
     <button id="back" class="quiet" aria-label="${session.mock_interview_id ? "Back to mock interview" : "Back to studio"}">← <span>${session.mock_interview_id ? "Interview" : "Studio"}</span>
     </button>
@@ -21,7 +21,7 @@ export function workspaceMarkup(session) {
     </header>
     <div class="work-grid">
     <aside class="files">
-    <h4>Files</h4>
+    <h4>${session.track === "behavioral" ? "Response" : "Files"}</h4>
     <div id="file-list">
     </div>
     <form class="new-file" id="new-file">
@@ -32,7 +32,7 @@ export function workspaceMarkup(session) {
     </aside>
     <div class="resize-handle resize-files" data-resize="files" role="separator" aria-label="Resize file explorer" aria-orientation="vertical" aria-valuemin="140" aria-valuemax="320" tabindex="0">
     </div>
-    <section class="code-area" aria-label="${design ? "Design workspace" : "Code workspace"}">
+    <section class="code-area" aria-label="${design ? "Design workspace" : session.track === "behavioral" ? "Behavioral rehearsal" : "Code workspace"}">
     <div class="code-title">
     <span id="code-title">
     </span>
@@ -68,11 +68,12 @@ export function workspaceMarkup(session) {
     <div class="workspace-tabs" role="tablist" aria-label="Session information">
     <button role="tab" id="tab-brief" aria-selected="true" aria-controls="panel-brief" data-panel="brief">Brief</button>
     <button role="tab" id="tab-support" aria-selected="false" aria-controls="panel-support" data-panel="support" tabindex="-1">Support</button>
-    <button role="tab" id="tab-runs" aria-selected="false" aria-controls="panel-runs" data-panel="runs" tabindex="-1" ${design ? "hidden" : ""}>Runs</button>
+    <button role="tab" id="tab-runs" aria-selected="false" aria-controls="panel-runs" data-panel="runs" tabindex="-1" ${design || session.track === "behavioral" ? "hidden" : ""}>Runs</button>
     </div>
     <section class="brief-panel" id="panel-brief" role="tabpanel" aria-labelledby="tab-brief">
     <div class="eyebrow">Exercise · version ${session.exercise_version}</div>
     <h3>${esc(session.title)}</h3>
+    ${session.behavioral_context ? `<section class="practice-focus"><h4>Prepared example</h4><p>${esc(session.behavioral_context.title)} · captured story version ${session.behavioral_context.story_version}. Preparation is copied into this session; later story edits don’t change it. Write and review your response in answer.md.</p></section>` : ""}
     ${session.archived_at ? '<section class="practice-focus"><h4>Archived session</h4><p>Your submission and review remain available. Restore this session from Sessions → Archived, or restore its complete mock interview.</p></section>' : ""}
     ${session.revision_of_id ? `<section class="rework-context" aria-label="Rework context"><h4>Revision practice</h4><p><strong>Your goal:</strong> ${esc(session.revision_context.goal)}</p><p class="subtitle">Working from an earlier submission of the same exercise version.</p><button id="compare-rework">Compare saved changes</button><button id="open-original" class="quiet">Original submission →</button><details><summary>Feedback from the original</summary>${renderSavedFeedback(session.revision_context)}</details></section>` : ""}
     ${session.practice_focus ? `<section class="practice-focus" aria-label="Practice focus"><h4>Your practice focus</h4><strong>${esc(session.practice_focus.title)}</strong><p>${esc(session.practice_focus.practice)}</p><p class="subtitle">Based on your earlier self-assessment. Submit and review this attempt to reassess the gap.</p></section>` : ""}

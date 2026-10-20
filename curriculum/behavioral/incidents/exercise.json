@@ -1,0 +1,14 @@
+{
+  "slug": "behavioral-incidents",
+  "version": 1,
+  "title": "Leading through an incident",
+  "track": "behavioral",
+  "duration_minutes": 8,
+  "topic": "incidents",
+  "summary": "Tell me about a production incident where you played a meaningful role. Explain what you knew at the time, how you helped stabilize the system, and what changed afterward.",
+  "skills": [
+    "Incidents",
+    "Communication",
+    "Reflection"
+  ]
+}

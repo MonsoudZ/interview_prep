@@ -5,6 +5,7 @@ class AutomatedReviewWorkflow
   end
 
   def self.request!(session, account, request_id)
+    raise SessionCommandError, "Behavioral rehearsal uses self-review; automated feedback is not connected for this track" if session.exercise_version.track == "behavioral"
     unless request_id.is_a?(String) && request_id.match?(/\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/)
       raise Workspace::Invalid, "Invalid review request identity"
     end
@@ -28,6 +29,7 @@ class AutomatedReviewWorkflow
   end
 
   def self.present(session)
+    return { available: false, supported: false, review: nil, notice: "Behavioral rehearsal uses self-review of the submitted answer; no automated behavioral judgment is available." } if session.exercise_version.track == "behavioral"
     expire!
     review = session.automated_reviews.order(created_at: :desc).first
     worker = ReviewWorker.available.order(last_seen_at: :desc).first

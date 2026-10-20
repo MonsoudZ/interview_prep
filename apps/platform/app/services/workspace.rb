@@ -2,6 +2,7 @@ require "digest"
 class Workspace
   class Invalid < StandardError; end
   def self.editable?(path, exercise = nil)
+    return BehavioralContent::FILES.include?(path) if exercise&.track == "behavioral"
     if exercise&.track == "system_design"
       return exercise.version >= 2 ? DesignDocument::FILES.include?(path) : path == "notes.md"
     end
@@ -16,9 +17,12 @@ class Workspace
       raise Invalid, "Keep all design sections and diagram together" unless files.keys.sort == DesignDocument::FILES.sort
       DesignDocument.validate!(files.fetch("diagram.json"))
     end
+    if exercise.track == "behavioral"
+      raise Invalid, "Keep the behavioral answer and preparation together" unless files.keys.sort == BehavioralContent::FILES.sort
+    end
     total = 0
     files.each do |path, text|
-      permitted = exercise.track == "system_design" ? editable?(path, exercise) : exercise.track == "ruby" ? path == "solution.rb" : editable?(path) && !%w[solution.rb notes.md].include?(path)
+      permitted = %w[system_design behavioral].include?(exercise.track) ? editable?(path, exercise) : exercise.track == "ruby" ? path == "solution.rb" : editable?(path) && !%w[solution.rb notes.md].include?(path)
       raise Invalid, "File path or content is invalid" unless permitted && text.is_a?(String) && text.valid_encoding?
       total += text.bytesize
     end

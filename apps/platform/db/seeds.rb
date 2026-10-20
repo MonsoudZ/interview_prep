@@ -81,3 +81,14 @@ ExerciseVersion.find_or_create_by!(slug: "webhook-delivery", version: 2) do |exe
     [File.basename(path), File.read(path)]
   }
 end
+
+BehavioralContent.entries.each do |entry|
+  ExerciseVersion.find_or_create_by!(slug: entry.fetch("slug"), version: entry.fetch("version")) do |exercise|
+    exercise.title = entry.fetch("title")
+    exercise.track = "behavioral"
+    exercise.duration_minutes = entry.fetch("duration_minutes")
+    exercise.brief = File.read(root.join("curriculum/behavioral", entry.fetch("topic"), "BRIEF.md"))
+    exercise.starter_files = { "answer.md" => "# Rehearsed answer\n\n## Situation and stakes\n\n## My responsibility\n\n## Actions and decisions\n\n## Outcomes and evidence\n\n## Reflection and learning\n",
+      "preparation.md" => "# Preparation\n\nNo story-bank example was imported. Write the actual rehearsal in answer.md.\n" }
+  end
+end

@@ -3,6 +3,7 @@ import { mountAuth } from "./auth.js";
 import { createDashboard } from "./dashboard.js";
 import { mountWorkspace } from "./workspace.js";
 import { createRequestScope } from "./request-scope.js";
+import { mountStories } from "./stories.js";
 import { mountMockInterviews } from "./mock-interviews.js";
 import { dashboardPage } from "./session-list.js";
 import { notice } from "./ui.js";
@@ -73,6 +74,7 @@ async function showDashboard(initialPage = dashboardPage(location.hash)) {
         notice,
         onSession: showWorkspace,
         onMocks: (id) => showMocks(id),
+        onStories: () => showStories(),
         onOpenSession: openSession,
         onSignedOut: () => {
           account = null;
@@ -103,13 +105,32 @@ function showWorkspace(session, options = {}) {
       onBack: () =>
         session.mock_interview_id
           ? showMocks(session.mock_interview_id)
-          : showDashboard(options.returnPage || "home"),
+          : options.returnStories
+            ? showStories()
+            : showDashboard(options.returnPage || "home"),
       reviewOnOpen: options.reviewOnOpen,
       followupRoundId: options.followupRoundId,
       onOpenSession: (id, extra = {}) =>
-        openSession(id, { returnPage: options.returnPage || "home", ...extra }),
+        openSession(id, {
+          returnPage: options.returnPage || "home",
+          returnStories: options.returnStories,
+          ...extra,
+        }),
     }),
   );
+}
+async function showStories(id) {
+  replaceScreen(() =>
+    mountStories({
+      root,
+      api,
+      notice,
+      initialId: id,
+      onBack: () => showDashboard(),
+      onOpenSession: openSession,
+    }),
+  );
+  await screen.load();
 }
 async function showMocks(id) {
   replaceScreen(() =>
@@ -153,7 +174,9 @@ try {
       /^#session\/([0-9a-f-]{36})(?:\/followup\/([0-9a-f-]{36}))?$/,
     );
     const mockMatch = location.hash.match(/^#interview\/([0-9a-f-]{36})$/);
-    if (mockMatch) await showMocks(mockMatch[1]);
+    const storyMatch = location.hash.match(/^#stories(?:\/([0-9a-f-]{36}))?$/);
+    if (storyMatch) await showStories(storyMatch[1]);
+    else if (mockMatch) await showMocks(mockMatch[1]);
     else if (location.hash === "#interviews") await showMocks();
     else if (match) await openSession(match[1], { followupRoundId: match[2] });
     else await showDashboard();

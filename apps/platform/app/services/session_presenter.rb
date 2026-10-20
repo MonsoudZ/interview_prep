@@ -11,7 +11,8 @@ class SessionPresenter
       submitted_at: session.submitted_at, revision: session.current_revision,
       submitted_revision: session.submitted_revision, brief: exercise.brief,
       files: exercise.starter_files.merge(session.current_snapshot.files),
-      initial_path: RailsCurriculum.initial_path(exercise),
+      behavioral_context: session.behavioral_context,
+      initial_path: exercise.track == "behavioral" ? "answer.md" : RailsCurriculum.initial_path(exercise),
       editable_paths: session.current_snapshot.files.keys, server_time: Time.current,
       executable: exercise.operation.present?, worker_available: exercise.operation.present? && WorkerNode.available?(exercise.operation),
       executions: session.execution_requests.order(created_at: :desc).limit(20).each_with_index.map { |execution, index|

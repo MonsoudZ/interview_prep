@@ -33,9 +33,11 @@ export function mockReportText(mock) {
         );
       if (!stage.evidence.reported_tests.length)
         lines.push(
-          stage.evidence.track === "system_design"
-            ? "Design evidence: submitted architecture and notes; no automated correctness grade."
-            : "No test run for this submitted revision.",
+          stage.evidence.track === "behavioral"
+            ? "Behavioral evidence: submitted answer; no audio or automated behavioral judgment."
+            : stage.evidence.track === "system_design"
+              ? "Design evidence: submitted architecture and notes; no automated correctness grade."
+              : "No test run for this submitted revision.",
         );
       for (const criterion of stage.evidence.criteria || []) {
         const entry = stage.evidence.self_assessment[criterion.id];
@@ -74,7 +76,7 @@ function evidenceMarkup(stage) {
     (entry) => entry.rating !== "not_observed",
   ).length;
   const latest = e.reported_tests[0]?.summary;
-  return `<details class="mock-evidence"><summary>${e.track === "system_design" ? "Architecture and notes" : latest ? `Runner reported ${latest.passed}/${latest.tests} passing` : "No submitted-revision test result"} · ${observed}/${e.criteria?.length || 0} criteria assessed</summary><p><strong>Submitted revision</strong> <code>${esc(e.revision.slice(0, 12))}</code></p>${e.reported_tests.length ? e.reported_tests.map((run) => `<p>Runner reported: ${esc(run.status)}${run.summary ? ` · ${run.summary.passed}/${run.summary.tests} passing` : " · no complete test summary"}</p>`).join("") : e.track === "system_design" ? "<p>Submitted architecture and notes. No automated correctness grade.</p>" : "<p>No test run for this submitted revision.</p>"}<h4>Self-assessment</h4>${(
+  return `<details class="mock-evidence"><summary>${e.track === "behavioral" ? "Rehearsed answer" : e.track === "system_design" ? "Architecture and notes" : latest ? `Runner reported ${latest.passed}/${latest.tests} passing` : "No submitted-revision test result"} · ${observed}/${e.criteria?.length || 0} criteria assessed</summary><p><strong>Submitted revision</strong> <code>${esc(e.revision.slice(0, 12))}</code></p>${e.reported_tests.length ? e.reported_tests.map((run) => `<p>Runner reported: ${esc(run.status)}${run.summary ? ` · ${run.summary.passed}/${run.summary.tests} passing` : " · no complete test summary"}</p>`).join("") : e.track === "behavioral" ? "<p>Submitted rehearsal answer. No audio or automated behavioral judgment.</p>" : e.track === "system_design" ? "<p>Submitted architecture and notes. No automated correctness grade.</p>" : "<p>No test run for this submitted revision.</p>"}<h4>Self-assessment</h4>${(
     e.criteria || []
   )
     .map((c) => {

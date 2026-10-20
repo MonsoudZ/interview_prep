@@ -1,3 +1,4 @@
+import { createBehavioralEditor } from "./behavioral-editor.js";
 import { createEditor } from "./editor.bundle.js?v=1";
 import { createDesignEditor } from "./design-workspace.js";
 import { renderTestResults } from "./test-results.js";
@@ -227,17 +228,20 @@ export function mountWorkspace({
         if (button && !button.disabled && !button.hidden) sessionAction("run");
       },
     };
-    sourceEditor = hasDesignCanvas
-      ? createDesignEditor(root.querySelector("#code"), {
-          ...editorOptions,
-          files,
-          notice,
-          onSelect(path) {
-            selected = path;
-            renderCode();
-          },
-        })
-      : createEditor(root.querySelector("#code"), editorOptions);
+    sourceEditor =
+      session.track === "behavioral"
+        ? createBehavioralEditor(root.querySelector("#code"), editorOptions)
+        : hasDesignCanvas
+          ? createDesignEditor(root.querySelector("#code"), {
+              ...editorOptions,
+              files,
+              notice,
+              onSelect(path) {
+                selected = path;
+                renderCode();
+              },
+            })
+          : createEditor(root.querySelector("#code"), editorOptions);
     panels = mountPanels(
       root.querySelector(".workspace"),
       preferences.layout,
@@ -324,15 +328,15 @@ export function mountWorkspace({
       root.querySelector("#exercise-files")?.open ||
       !active.editable_paths.includes(selected);
     const fileButton = (path) =>
-      `<button class="file ${path === selected ? "selected" : ""}" data-file="${esc(path)}" aria-pressed="${path === selected}" title="${esc(path)}"><span class="file-symbol">${path.endsWith(".rb") ? "rb" : "≡"}</span><span class="file-name">${esc(path.split("/").at(-1))}<small>${esc(path.split("/").slice(0, -1).join("/") || "repository")}</small></span></button>`;
+      `<button class="file ${path === selected ? "selected" : ""}" data-file="${esc(path)}" aria-pressed="${path === selected}" title="${esc(path)}"><span class="file-symbol">${path.endsWith(".rb") ? "rb" : "≡"}</span><span class="file-name">${esc(active.track === "behavioral" ? (path === "answer.md" ? "Answer" : "Preparation") : path.split("/").at(-1))}<small>${esc(active.track === "behavioral" ? path : path.split("/").slice(0, -1).join("/") || "repository")}</small></span></button>`;
     const paths = Object.keys(files).sort();
     root.querySelector("#file-list").innerHTML =
-      `<div class="file-group-label">Solution</div>${paths
+      `<div class="file-group-label">${active.track === "behavioral" ? "Rehearsal" : "Solution"}</div>${paths
         .filter((path) => active.editable_paths.includes(path))
         .map(fileButton)
         .join(
           "",
-        )}<details id="exercise-files" ${exerciseOpen ? "open" : ""}><summary>Exercise files <span>read-only</span></summary>${paths
+        )}<details id="exercise-files" ${active.track === "behavioral" ? "hidden" : ""} ${exerciseOpen ? "open" : ""}><summary>Exercise files <span>read-only</span></summary>${paths
         .filter((path) => !active.editable_paths.includes(path))
         .map(fileButton)
         .join("")}</details>`;
@@ -350,7 +354,13 @@ export function mountWorkspace({
   function renderCode() {
     if (!scope.alive) return;
     root.querySelector("#code-title").textContent =
-      (hasDesignCanvas ? "Architecture & design notes" : selected) +
+      (active.track === "behavioral"
+        ? selected === "answer.md"
+          ? "Rehearsed answer"
+          : "Preparation notes"
+        : hasDesignCanvas
+          ? "Architecture & design notes"
+          : selected) +
       (active.editable_paths.includes(selected)
         ? ""
         : " · read-only exercise file");

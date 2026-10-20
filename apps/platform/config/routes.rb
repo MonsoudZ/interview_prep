@@ -5,6 +5,9 @@ Rails.application.routes.draw do
   post "/api/login", to: "auth#login"
   delete "/api/logout", to: "auth#logout"
   get "/api/exercises", to: "exercises#index"
+  resources :behavioral_stories, path: "/api/stories", only: [:index, :show, :create, :update] do
+    post :rehearse, on: :member
+  end
   get "/api/progress", to: "progress#show"
   resources :mock_interviews, path: "/api/mock_interviews", only: [:index, :create, :show, :update] do
     member do

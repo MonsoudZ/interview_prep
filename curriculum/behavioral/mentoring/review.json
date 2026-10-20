@@ -1,0 +1,51 @@
+{
+  "version": "behavioral-mentoring-review-v1",
+  "hints": [
+    {
+      "title": "1 \u00b7 Choose a bounded example",
+      "body": "Pick one situation where your actions and the stakes are clear. A smaller honest example is more useful than an invented dramatic one."
+    },
+    {
+      "title": "2 \u00b7 Separate decisions from chronology",
+      "body": "Name your responsibility, the alternatives you considered, what you actually did, and who else contributed. Explain why each important action mattered."
+    },
+    {
+      "title": "3 \u00b7 Close with evidence and reflection",
+      "body": "State what you observed afterward and how you know. If the result was mixed or uncertain, explain that limitation and what you changed next time."
+    }
+  ],
+  "criteria": [
+    {
+      "id": "clarity",
+      "title": "Clear situation and stakes",
+      "target": "Give enough context, constraints and stakes to understand the decision without an unrelated chronology.",
+      "probe": "What context can you remove without changing the listener\u2019s understanding?",
+      "practice": "Give the opening in two sentences: problem, stakes, and your responsibility."
+    },
+    {
+      "id": "contribution",
+      "title": "Specific personal contribution",
+      "target": "Distinguish your actions and decisions from team outcomes, including how you involved others.",
+      "probe": "Which action was specifically yours, and what did someone else contribute?",
+      "practice": "Replace vague \u201cwe\u201d statements with precise personal actions while crediting collaborators."
+    },
+    {
+      "id": "judgment",
+      "title": "Mentoring and independence",
+      "target": "Describe specific coaching actions, feedback and boundaries, with observable growth rather than taking credit for someone else\u2019s work.",
+      "probe": "When did you step back, and how did you know they were ready?",
+      "practice": "Describe one coaching interaction, the next independent action and feedback that changed your approach."
+    },
+    {
+      "id": "reflection",
+      "title": "Outcomes, limits and reflection",
+      "target": "Explain observed results, attribution limits, and what you would repeat or change without inventing evidence.",
+      "probe": "What did you learn that changed your behavior on a later occasion?",
+      "practice": "State an observable outcome, its evidence limit and one concrete behavior you changed."
+    }
+  ],
+  "follow_up": "What would you do if your first mentoring approach did not help, or the engineer did not want that kind of support?",
+  "evidence_paths": [
+    "answer.md"
+  ]
+}

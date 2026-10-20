@@ -1,0 +1,14 @@
+{
+  "slug": "behavioral-tradeoffs",
+  "version": 1,
+  "title": "Making a difficult tradeoff",
+  "track": "behavioral",
+  "duration_minutes": 8,
+  "topic": "tradeoffs",
+  "summary": "Tell me about choosing between delivery speed and longer-term quality, reliability or maintainability. What alternatives did you consider, who accepted the risk, and how did you revisit the decision?",
+  "skills": [
+    "Tradeoffs",
+    "Communication",
+    "Reflection"
+  ]
+}

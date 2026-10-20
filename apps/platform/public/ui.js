@@ -1,4 +1,9 @@
 export const tracks = {
+  behavioral: [
+    "Behavioral interviews",
+    "Leadership, collaboration, and reflection from your own experience.",
+    "◎",
+  ],
   rails: [
     "Rails engineering",
     "API implementation in a Rails repository.",

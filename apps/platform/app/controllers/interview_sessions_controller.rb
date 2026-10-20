@@ -84,7 +84,7 @@ class InterviewSessionsController < ApplicationController
     record.with_lock do
       record.expire_locked!
       return conflict("This submission is read-only") if record.status == "submitted"
-      if record.mock_interview_stage && record.status != "active"
+      if (record.mock_interview_stage || (record.exercise_version.track == "behavioral" && record.mode == "assessment")) && record.status != "active"
         return conflict("Start this interview stage before editing its source")
       end
       return conflict("A newer save exists. Reload before saving.") unless params[:expected_revision] == record.current_revision

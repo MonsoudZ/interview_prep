@@ -47,7 +47,7 @@ class MockInterviewsTest < ActionDispatch::IntegrationTest
   end
   test "booking pins schedules versions and only the first workspace" do
     get "/api/mock_interviews"; assert_response :ok
-    assert_equal [149, 89, 114], body.fetch("plans").map { |p| p["duration_minutes"] }
+    assert_equal [54, 149, 89, 114], body.fetch("plans").map { |p| p["duration_minutes"] }
     mock = book("senior-backend")
     assert_equal 4, body.fetch("stages").length
     assert_nil body["deadline_at"]
@@ -241,6 +241,20 @@ class MockInterviewsTest < ActionDispatch::IntegrationTest
     start_stage(mock)
     put "/api/sessions/#{child.id}/snapshot", params: { expected_revision: child.current_revision, files: child.current_snapshot.files }, as: :json
     assert_response :ok
+  end
+
+  test "behavioral loop covers all five themes and captures followups from every answer" do
+    mock = book("behavioral")
+    5.times do
+      submit_stage(mock)
+      command(mock, "advance"); assert_response :ok
+    end
+    round = mock.mock_interview_stages.last.followup_round
+    assert_equal 7, round.questions.length
+    assert_equal 5, round.questions.map { |question| question.fetch("source_session_id") }.uniq.length
+    assert mock.mock_interview_stages.where.not(interview_session_id: nil).all? { |stage| stage.interview_session.exercise_version.track == "behavioral" }
+    command(mock, "finish"); assert_response :ok
+    assert_equal "completed", mock.reload.status
   end
 
 end

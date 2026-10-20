@@ -18,6 +18,12 @@ class ExerciseCatalog
   }.freeze
 
   def self.details(exercise)
+    if (entry = BehavioralContent.find(exercise))
+      return { brief: exercise.brief, summary: entry.fetch("summary"), difficulty: "Senior · behavioral", skills: entry.fetch("skills"),
+        tools: ["Story bank", "Typed rehearsal", "Guided hints", "Submission self-review", "Scripted follow-ups"],
+        limitation: "No audio recording or automated behavioral judgment. Use real examples and observable outcomes.",
+        difficulty_note: "Editorial practice level, not a calibrated interview score." }
+    end
     if exercise.slug == "webhook-delivery" && exercise.version == 2
       return CONTENT.fetch("webhook-delivery").merge(brief: exercise.brief,
         tools: ["Architecture canvas", "Structured design notes", "SVG / Markdown export", "Guided hints", "Submission self-review"],

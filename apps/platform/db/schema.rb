@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_18_000006) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_19_000001) do
   create_table "accounts", id: :string, force: :cascade do |t|
     t.string "name", null: false
     t.string "email", null: false
@@ -44,6 +44,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_18_000006) do
     t.index ["source_snapshot_id"], name: "index_automated_reviews_on_source_snapshot_id"
     t.index ["status", "created_at"], name: "index_automated_reviews_on_status_and_created_at"
     t.index ["worker_id"], name: "one_review_per_worker", unique: true, where: "status = 'running'"
+  end
+
+  create_table "behavioral_stories", id: :string, force: :cascade do |t|
+    t.string "account_id", null: false
+    t.string "client_request_id", null: false
+    t.string "title", null: false
+    t.json "topics", default: [], null: false
+    t.json "sections", default: {}, null: false
+    t.string "readiness", default: "draft", null: false
+    t.datetime "archived_at"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "client_request_id"], name: "index_behavioral_stories_on_account_id_and_client_request_id", unique: true
+    t.index ["account_id"], name: "index_behavioral_stories_on_account_id"
   end
 
   create_table "execution_requests", id: :string, force: :cascade do |t|
@@ -133,7 +148,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_18_000006) do
     t.string "rework_request_id"
     t.json "revision_context"
     t.datetime "archived_at"
+    t.json "behavioral_context"
+    t.string "behavioral_request_id"
     t.index ["account_id", "archived_at", "updated_at"], name: "idx_on_account_id_archived_at_updated_at_d6fbbe1791"
+    t.index ["account_id", "behavioral_request_id"], name: "idx_on_account_id_behavioral_request_id_b9e7075cd9", unique: true
     t.index ["account_id"], name: "index_interview_sessions_on_account_id"
     t.index ["exercise_version_id"], name: "index_interview_sessions_on_exercise_version_id"
     t.index ["revision_of_id", "rework_request_id"], name: "rework_request_identity", unique: true
@@ -220,6 +238,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_18_000006) do
 
   add_foreign_key "automated_reviews", "interview_sessions"
   add_foreign_key "automated_reviews", "source_snapshots"
+  add_foreign_key "behavioral_stories", "accounts"
   add_foreign_key "execution_requests", "interview_sessions"
   add_foreign_key "execution_requests", "source_snapshots"
   add_foreign_key "followup_rounds", "interview_sessions"

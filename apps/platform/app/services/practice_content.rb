@@ -2,6 +2,7 @@ require "yaml"
 
 class PracticeContent
   def self.for(exercise)
+    return BehavioralContent.review(exercise) if exercise.track == "behavioral"
     curriculum = RailsCurriculum.review(exercise)
     return curriculum if curriculum
     # Only published exercise identities choose content files; request paths never do.

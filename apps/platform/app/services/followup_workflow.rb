@@ -28,9 +28,10 @@ class FollowupWorkflow
           { "id" => criterion.fetch("id"), "title" => criterion.fetch("title"), "kind" => "criterion",
             "prompt" => criterion.fetch("probe"), "target" => criterion.fetch("target"), "practice" => criterion.fetch("practice") }
         end
-        questions << { "id" => "extension", "title" => "Changed requirement", "kind" => "extension", "prompt" => content.fetch("follow_up"),
-          "target" => "State the changed assumptions, required guarantees, failure cases, and tradeoffs. Treat this as an extension, not a missing original requirement.",
-          "practice" => "Explain how the extension changes the original solution, then test your reasoning with one counterexample." }
+        behavioral = session.exercise_version.track == "behavioral"
+        questions << { "id" => "extension", "title" => behavioral ? "Reflection and transfer" : "Changed requirement", "kind" => "extension", "prompt" => content.fetch("follow_up"),
+          "target" => behavioral ? "Explain how you would adapt your actions without inventing outcomes or treating hindsight as knowledge you had at the time." : "State the changed assumptions, required guarantees, failure cases, and tradeoffs. Treat this as an extension, not a missing original requirement.",
+          "practice" => behavioral ? "Describe one different constraint and the specific behavior you would change." : "Explain how the extension changes the original solution, then test your reasoning with one counterexample." }
         round = session.followup_rounds.create!(source_snapshot: session.source_snapshots.find_by!(revision: session.submitted_revision),
           client_request_id: request_id, mode: mode, content_version: content.fetch("version"), questions: questions,
           duration_seconds: questions.length * 120)

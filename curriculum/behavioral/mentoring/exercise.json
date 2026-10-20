@@ -1,0 +1,14 @@
+{
+  "slug": "behavioral-mentoring",
+  "version": 1,
+  "title": "Helping another engineer grow",
+  "track": "behavioral",
+  "duration_minutes": 8,
+  "topic": "mentoring",
+  "summary": "Tell me about helping another engineer become more effective. How did you understand their goals, choose your support, and tell whether it improved their independence?",
+  "skills": [
+    "Mentoring",
+    "Communication",
+    "Reflection"
+  ]
+}

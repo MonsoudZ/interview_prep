@@ -108,10 +108,10 @@ class PlatformTest < ActionDispatch::IntegrationTest
     assert_response :too_many_requests
   end
 
-  test "catalog contains three tracks without fake worker availability" do
+  test "catalog contains four tracks without fake worker availability" do
     register
     get "/api/exercises"
-    assert_equal %w[rails ruby system_design], body.fetch("exercises").map { |e| e["track"] }.uniq.sort
+    assert_equal %w[behavioral rails ruby system_design], body.fetch("exercises").map { |e| e["track"] }.uniq.sort
     assert body["exercises"].none? { |e| e["worker_available"] }
   end
 

@@ -58,3 +58,7 @@ Reliable Webhook Delivery version 2 publishes a canvas plus six structured notes
 The last three exercises emphasize changes to existing systems. Their 36 test groups include injected audit failures, stale revisions, validation bypass, bounded loading and deliberately interleaved legacy/dual writes. Their briefs distinguish local SQLite evidence from real PostgreSQL concurrency and production migration safety. The backfill exercise edits a test schema and application service; it does not run production DDL migrations.
 
 Use the [mock interview plans](../docs/mock-interviews.md) to combine practical work, algorithms, architecture and follow-ups into a timed loop.
+
+## Behavioral interviews
+
+Five versioned question sets in `behavioral/` cover senior ownership, incidents, conflict, mentoring and tradeoffs. Each publishes an eight-minute prompt, three guided hints, four review criteria and scripted probes. Story preparation is stored separately from rehearsed answers; reviews cite only `answer.md`. Questions require real examples without invented metrics. These exercises use no execution worker or model grading. See [behavioral practice](../docs/behavioral-interviews.md).

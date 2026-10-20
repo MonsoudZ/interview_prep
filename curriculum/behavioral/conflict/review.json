@@ -1,0 +1,51 @@
+{
+  "version": "behavioral-conflict-review-v1",
+  "hints": [
+    {
+      "title": "1 \u00b7 Choose a bounded example",
+      "body": "Pick one situation where your actions and the stakes are clear. A smaller honest example is more useful than an invented dramatic one."
+    },
+    {
+      "title": "2 \u00b7 Separate decisions from chronology",
+      "body": "Name your responsibility, the alternatives you considered, what you actually did, and who else contributed. Explain why each important action mattered."
+    },
+    {
+      "title": "3 \u00b7 Close with evidence and reflection",
+      "body": "State what you observed afterward and how you know. If the result was mixed or uncertain, explain that limitation and what you changed next time."
+    }
+  ],
+  "criteria": [
+    {
+      "id": "clarity",
+      "title": "Clear situation and stakes",
+      "target": "Give enough context, constraints and stakes to understand the decision without an unrelated chronology.",
+      "probe": "What context can you remove without changing the listener\u2019s understanding?",
+      "practice": "Give the opening in two sentences: problem, stakes, and your responsibility."
+    },
+    {
+      "id": "contribution",
+      "title": "Specific personal contribution",
+      "target": "Distinguish your actions and decisions from team outcomes, including how you involved others.",
+      "probe": "Which action was specifically yours, and what did someone else contribute?",
+      "practice": "Replace vague \u201cwe\u201d statements with precise personal actions while crediting collaborators."
+    },
+    {
+      "id": "judgment",
+      "title": "Influence and disagreement",
+      "target": "Represent the other view fairly, explain evidence and decision process, and describe how you supported the outcome even if your preference lost.",
+      "probe": "What was the strongest argument against your position?",
+      "practice": "Retell the disagreement from the other person\u2019s perspective before describing your actions."
+    },
+    {
+      "id": "reflection",
+      "title": "Outcomes, limits and reflection",
+      "target": "Explain observed results, attribution limits, and what you would repeat or change without inventing evidence.",
+      "probe": "What did you learn that changed your behavior on a later occasion?",
+      "practice": "State an observable outcome, its evidence limit and one concrete behavior you changed."
+    }
+  ],
+  "follow_up": "Suppose the decision went against your recommendation and later failed. How would you respond without blame or hindsight certainty?",
+  "evidence_paths": [
+    "answer.md"
+  ]
+}

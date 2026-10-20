@@ -59,6 +59,11 @@ export function renderAutomatedReport(report, criteria) {
     <details class="ai-criterion"><summary>Review limitations</summary><ul>${report.limitations.map((text) => `<li>${esc(text)}</li>`).join("")}</ul><p>Source locations are checked against your submission. The model's reasoning may still be incorrect.</p></details>`;
 }
 export function mountAutomatedReview(host, session, criteria, { api, signal }) {
+  if (session.track === "behavioral") {
+    host.innerHTML =
+      "<p>Review your submitted response below. No model judgment, audio assessment, or verification of personal experience is performed.</p>";
+    return { destroy() {} };
+  }
   const scope = createRequestScope(api);
   let state = null,
     timer = null,

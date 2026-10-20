@@ -18,6 +18,9 @@ class ReviewWorkflow
       unless evidence.is_a?(Hash) && evidence.keys.sort == %w[end_line path start_line]
         raise Workspace::Invalid, "Invalid evidence reference"
       end
+      if content["evidence_paths"] && !content["evidence_paths"].include?(evidence["path"])
+        raise Workspace::Invalid, "Cite the rehearsed answer, not the preparation notes"
+      end
       source = snapshot.files[evidence["path"]]
       first, last = evidence.values_at("start_line", "end_line")
       unless source && first.is_a?(Integer) && last.is_a?(Integer) && first >= 1 && last >= first && last <= source.lines.length && last - first < 20
@@ -40,10 +43,10 @@ class ReviewWorkflow
       criterion.slice("id", "title", "practice") if entry && %w[needs_development approaching_target].include?(entry["rating"])
     end
     design = snapshot.files["diagram.json"] && DesignDocument.validate!(snapshot.files.fetch("diagram.json"))
-    { design: design, reference_available: RailsCurriculum.reference(session.exercise_version).present?, kind: "self_assessment", content_version: content.fetch("version"), revision: snapshot.revision,
+    { preparation: session.behavioral_context, design: design, reference_available: RailsCurriculum.reference(session.exercise_version).present?, kind: "self_assessment", content_version: content.fetch("version"), revision: snapshot.revision,
       version: review&.lock_version, criteria: content.fetch("criteria"), ratings: RATINGS,
       entries: entries, reflection: review&.reflection || "", updated_at: review&.updated_at,
-      evidence_files: snapshot.files.keys.sort, assistance: PracticeContent.present(session).fetch(:hints),
+      evidence_files: snapshot.files.keys.sort & (content["evidence_paths"] || snapshot.files.keys), assistance: PracticeContent.present(session).fetch(:hints),
       next_steps: gaps, follow_up: content.fetch("follow_up"),
       executions: executions.map { |execution| { id: execution.id, status: execution.status, result: execution.result } } }
   end

@@ -1,6 +1,7 @@
 # Published schedules are captured as stage rows; later catalog edits cannot change a booked loop.
 class MockInterviewWorkflow
   PLANS = {
+    "behavioral" => { title: "Senior behavioral interview", stages: [["behavioral-ownership", 1, 8], ["behavioral-incidents", 1, 8], ["behavioral-conflict", 1, 8], ["behavioral-mentoring", 1, 8], ["behavioral-tradeoffs", 1, 8], [nil, nil, 14]] },
     "senior-backend" => { title: "Senior backend interview", stages: [["invoice-amendments", 1, 60], ["merge-intervals", 2, 35], ["webhook-delivery", 2, 40], [nil, nil, 14]] },
     "debugging" => { title: "Debugging and architecture", stages: [["support-escalations", 1, 40], ["webhook-delivery", 2, 35], [nil, nil, 14]] },
     "migration" => { title: "Data migration and architecture", stages: [["safe-backfill", 1, 60], ["webhook-delivery", 2, 40], [nil, nil, 14]] }
@@ -170,9 +171,11 @@ class MockInterviewWorkflow
       quota = FollowupRound.joins(:interview_session).where(interview_sessions: { account_id: mock.account_id })
       FollowupWorkflow.expire_scope!(quota)
       raise SessionCommandError.new("Finish an existing follow-up round first (limit two).", status: :too_many_requests) if quota.where(status: %w[ready active]).count >= 2
-      per_source = sources.length == 3 ? 2 : 3
+      per_source, remainder = 6.divmod(sources.length)
       questions = sources.each_with_index.flat_map do |source, index|
-        PracticeContent.for(source.exercise_version).fetch("criteria").first(per_source).map do |criterion|
+        criteria = PracticeContent.for(source.exercise_version).fetch("criteria")
+        criteria = criteria.sort_by { |criterion| %w[judgment reflection contribution clarity].index(criterion.fetch("id")) || 99 } if source.exercise_version.track == "behavioral"
+        criteria.first(per_source + (index < remainder ? 1 : 0)).map do |criterion|
           criterion.slice("title", "target", "practice").merge("id" => "#{index}-#{criterion.fetch('id')}", "kind" => "criterion",
             "prompt" => "#{source.exercise_version.title}: #{criterion.fetch('probe')}",
             "source_session_id" => source.id, "source_revision" => source.submitted_revision)
@@ -180,9 +183,10 @@ class MockInterviewWorkflow
       end
       design = sources.last
       content = PracticeContent.for(design.exercise_version)
-      questions << { "id" => "extension", "title" => "Changed requirement", "kind" => "extension", "prompt" => content.fetch("follow_up"),
-        "target" => "State the changed assumptions, guarantees and tradeoffs; this is an extension of the original task.",
-        "practice" => "Revisit the design with one failure scenario.", "source_session_id" => design.id, "source_revision" => design.submitted_revision }
+      behavioral = design.exercise_version.track == "behavioral"
+      questions << { "id" => "extension", "title" => behavioral ? "Reflection and transfer" : "Changed requirement", "kind" => "extension", "prompt" => content.fetch("follow_up"),
+        "target" => behavioral ? "Explain how you would adapt your actions without inventing an outcome or treating hindsight as knowledge you had at the time." : "State the changed assumptions, guarantees and tradeoffs; this is an extension of the original task.",
+        "practice" => behavioral ? "Describe one different constraint and the specific behavior you would change." : "Revisit the design with one failure scenario.", "source_session_id" => design.id, "source_revision" => design.submitted_revision }
       round = design.followup_rounds.create!(client_request_id: stage.id, mode: "assessment", content_version: "mock-followups-v1",
         source_snapshot: design.source_snapshots.find_by!(revision: design.submitted_revision), questions: questions, duration_seconds: stage.duration_seconds)
       stage.update!(followup_round: round)

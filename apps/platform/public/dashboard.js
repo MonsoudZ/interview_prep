@@ -20,6 +20,7 @@ export function createDashboard({
   account,
   onSession,
   onMocks,
+  onStories,
   onOpenSession,
   onSignedOut,
   notice: showNotice,
@@ -68,7 +69,7 @@ export function createDashboard({
     renderDashboard();
   }
   function card(exercise) {
-    return `<article class="exercise-row"><div class="exercise-name"><span class="exercise-track">${esc(tracks[exercise.track][0])}</span><h3>${esc(exercise.title)}</h3><p>${esc(exercise.summary || tracks[exercise.track][1])}</p><div class="exercise-level" title="${esc(exercise.difficulty_note)}">${esc(exercise.difficulty)}<span>${esc((exercise.skills || []).join(" · "))}</span></div></div><div class="exercise-format">${exercise.executable ? (exercise.track === "ruby" ? "Code + tests" : "Repository + tests") : exercise.track === "system_design" && exercise.version >= 2 ? "Canvas + notes" : "Writing only"}</div><span class="exercise-time">${exercise.duration_minutes} min</span><button data-exercise="${esc(exercise.id)}" aria-label="Open ${esc(exercise.title)}">Open ${icon("arrow")}</button></article>`;
+    return `<article class="exercise-row"><div class="exercise-name"><span class="exercise-track">${esc(tracks[exercise.track][0])}</span><h3>${esc(exercise.title)}</h3><p>${esc(exercise.summary || tracks[exercise.track][1])}</p><div class="exercise-level" title="${esc(exercise.difficulty_note)}">${esc(exercise.difficulty)}<span>${esc((exercise.skills || []).join(" · "))}</span></div></div><div class="exercise-format">${exercise.executable ? (exercise.track === "ruby" ? "Code + tests" : "Repository + tests") : exercise.track === "system_design" && exercise.version >= 2 ? "Canvas + notes" : exercise.track === "behavioral" ? "Typed rehearsal" : "Writing only"}</div><span class="exercise-time">${exercise.duration_minutes} min</span><button data-exercise="${esc(exercise.id)}" aria-label="Open ${esc(exercise.title)}">Open ${icon("arrow")}</button></article>`;
   }
   function renderDashboard() {
     if (!scope.alive) return;
@@ -84,12 +85,13 @@ export function createDashboard({
           : page === "progress"
             ? "Progress"
             : "Sessions";
-    const heading = `<header class="page-header"><div><h1>${pageTitle}</h1><p>${page === "home" ? "Rails, Ruby, and system design." : page === "library" ? "Choose an exercise, then practice with hints or a timer." : page === "progress" ? "A focused practice plan, grounded in your own reviews." : "Your saved attempts and submissions."}</p></div>${page === "home" ? `<span class="practice-summary">${historySummary?.ongoing ?? ongoing.length} in progress<span>·</span>${historySummary?.submitted ?? submitted.length} submitted</span>` : page === "progress" ? `<button id="refresh-progress" class="quiet" ${progressLoading ? "disabled" : ""}>${progressLoading ? "Refreshing…" : "Refresh"}</button>` : ""}</header>`;
+    const heading = `<header class="page-header"><div><h1>${pageTitle}</h1><p>${page === "home" ? "Rails, Ruby, system design, and behavioral practice." : page === "library" ? "Choose an exercise, then practice with hints or a timer." : page === "progress" ? "A focused practice plan, grounded in your own reviews." : "Your saved attempts and submissions."}</p></div>${page === "home" ? `<span class="practice-summary">${historySummary?.ongoing ?? ongoing.length} in progress<span>·</span>${historySummary?.submitted ?? submitted.length} submitted</span>` : page === "progress" ? `<button id="refresh-progress" class="quiet" ${progressLoading ? "disabled" : ""}>${progressLoading ? "Refreshing…" : "Refresh"}</button>` : ""}</header>`;
     const library = `<section class="exercise-section" aria-label="Practice exercises"><div class="section-top">${page === "home" ? "<h2>Exercises</h2>" : "<span></span>"}<span class="count-label">${displayed.length} available</span></div><div class="filter" role="group" aria-label="Filter exercises">${[
       ["all", "All"],
       ["rails", "Rails"],
       ["ruby", "Ruby"],
       ["system_design", "System design"],
+      ["behavioral", "Behavioral"],
     ]
       .map(
         ([key, label]) =>
@@ -127,6 +129,7 @@ export function createDashboard({
               ["rails", "Rails"],
               ["ruby", "Ruby"],
               ["system_design", "System design"],
+              ["behavioral", "Behavioral"],
               ["rework", "Reworks"],
               ["mock", "Interview stages"],
             ]
@@ -150,7 +153,8 @@ export function createDashboard({
       )
       .join(
         "",
-      )}<button id="mock-interviews">${icon("history")}Mock interviews</button></nav><div class="profile"><span class="avatar">${esc(account.name.slice(0, 1).toUpperCase())}</span><div><strong>${esc(account.name)}</strong><span>Personal account</span></div><button class="quiet" id="logout" aria-label="Sign out" title="Sign out">↪</button></div></aside><main class="main">${heading}${content}</main></div>`;
+      )}<button id="story-bank">${icon("library")}Story bank</button><button id="mock-interviews">${icon("history")}Mock interviews</button></nav><div class="profile"><span class="avatar">${esc(account.name.slice(0, 1).toUpperCase())}</span><div><strong>${esc(account.name)}</strong><span>Personal account</span></div><button class="quiet" id="logout" aria-label="Sign out" title="Sign out">↪</button></div></aside><main class="main">${heading}${content}</main></div>`;
+    root.querySelector("#story-bank").onclick = onStories;
     root.querySelector("#mock-interviews").onclick = () => onMocks();
     root.querySelectorAll("[data-page]").forEach(
       (button) =>

@@ -3,7 +3,8 @@ const pending = (execution) => ["queued", "leased"].includes(execution.status);
 export function editorReadOnly(session, path, conflict = false) {
   return (
     conflict ||
-    (!!session.mock_interview_id &&
+    ((!!session.mock_interview_id ||
+      (session.track === "behavioral" && session.mode === "assessment")) &&
       session.status !== "active" &&
       session.status !== "submitted") ||
     session.status === "submitted" ||
@@ -24,7 +25,10 @@ export function sessionPolicy(
 ) {
   const submitted = session.status === "submitted";
   const lockedBeforeStart =
-    !!session.mock_interview_id && !submitted && session.status !== "active";
+    (!!session.mock_interview_id ||
+      (session.track === "behavioral" && session.mode === "assessment")) &&
+    !submitted &&
+    session.status !== "active";
   const beforeStart = ["draft", "ready"].includes(session.status);
   const preparation = session.executions.find(
     (execution) =>
@@ -36,9 +40,11 @@ export function sessionPolicy(
     if (submitted)
       return "This submission is read-only. Open the review to add notes.";
     if (session.status === "active")
-      return session.track === "system_design"
-        ? "Develop the architecture and reasoning. Submit when finished."
-        : "Run tests as you work. Submit when finished.";
+      return session.track === "behavioral"
+        ? "Rehearse your example in answer.md. Submit to review your response and practice follow-ups."
+        : session.track === "system_design"
+          ? "Develop the architecture and reasoning. Submit when finished."
+          : "Run tests as you work. Submit when finished.";
     if (session.status === "ready")
       return session.mode === "assessment" &&
         session.executable &&
@@ -46,9 +52,11 @@ export function sessionPolicy(
         ? "Environment prepared. Reconnect the worker before starting the timer."
         : "Environment ready. Start the session when you’re ready to work.";
     if (!session.executable)
-      return session.track === "system_design"
-        ? "Read the brief, then start your design session."
-        : "Read the brief, then start your writing session.";
+      return session.track === "behavioral"
+        ? "Read the question, then start your rehearsal."
+        : session.track === "system_design"
+          ? "Read the brief, then start your design session."
+          : "Read the brief, then start your writing session.";
     if (preparing)
       return session.worker_available
         ? "Preparing the environment. Read the brief while it starts."
@@ -111,7 +119,9 @@ export function sessionPolicy(
         : "Worker offline · Test runs will wait in the queue."
       : session.track === "system_design"
         ? "Architecture and notes · Review available after submission"
-        : "Writing workspace · Saved source and submission review",
+        : session.track === "behavioral"
+          ? "Typed rehearsal · No audio recorded or assessed"
+          : "Writing workspace · Saved source and submission review",
     lockedBeforeStart,
     newFileHidden: submitted || lockedBeforeStart || session.track !== "rails",
   };

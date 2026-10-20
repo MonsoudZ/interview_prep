@@ -21,7 +21,7 @@ class ReworkSessions
         snapshot = source.source_snapshots.find_by!(revision: source.submitted_revision)
         context = context_for(source, snapshot, goal.strip)
         child = account.interview_sessions.create!(exercise_version: source.exercise_version, mode: mode,
-          revision_of: source, rework_request_id: request_id, revision_context: context)
+          behavioral_context: source.behavioral_context&.deep_dup, revision_of: source, rework_request_id: request_id, revision_context: context)
         Workspace.save!(child, snapshot.files.deep_dup)
         [child, true]
       end

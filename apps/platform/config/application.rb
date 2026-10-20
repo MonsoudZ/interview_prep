@@ -13,7 +13,7 @@ module InterviewPlatform
     config.cache_store = :memory_store
     config.session_store :cookie_store, key: ENV.fetch("INTERVIEW_COOKIE_NAME", "_interview_platform"), httponly: true,
       same_site: :lax, secure: ENV["RAILS_ENV"] == "production", expire_after: 2_592_000
-    config.filter_parameters += [:password, :password_confirmation, :token, :lease_token, :signature, :files, :report, :input, :revision_context, :goal, :answer, :answers, :current_draft, :review_entries, :reflection]
+    config.filter_parameters += [:story, :sections, :password, :password_confirmation, :token, :lease_token, :signature, :files, :report, :input, :revision_context, :goal, :answer, :answers, :current_draft, :review_entries, :reflection]
     config.secret_key_base = if ENV["RAILS_ENV"] == "production"
       ENV.fetch("SECRET_KEY_BASE")
     else
