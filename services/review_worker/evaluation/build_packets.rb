@@ -25,10 +25,40 @@ packets = %w[lru-cache rate-limiter].flat_map do |slug|
       "exercise" => exercise, "rubric" => review.fetch("criteria"), "follow_up" => review["follow_up"],
       "reviewer_guidance" => ReviewGuidance.for("ruby"), "files" => { "solution.rb" => source },
       "reference_alternative" => nil, "assistance" => [], "mode" => "guided", "practice_focus" => nil,
-      "rework" => nil, "executions" => [],
-      "limitations" => ["No voice or follow-up transcript is included in this code/design review packet. Do not infer communication, prompting, or independence from code alone.", "No execution logs are included. This is a local evaluator fixture, not personal practice history."]
+      "rework" => nil, "executions" => [], "follow_up_answers" => [],
+      "limitations" => [ReviewPacket::NO_FOLLOW_UP_LIMITATION, "No execution logs are included. This is a local evaluator fixture, not personal practice history."]
     } }
   end
+end
+# LRU reference with a completed follow-up round on the same revision. The verification criterion is about the
+# candidate's process, so it can only be rated from the typed answer: the correct answer predicts a failing
+# sequence that matches what the source does and must be rated at target; the contradicting answer claims a
+# `get` leaves recency unchanged (the reference refreshes it) and that tests ran before any prediction, so it
+# must be rated below target with a citation into follow-up/verification.md. Source criteria stay at target.
+lru = packets.find { |case_record| case_record["case"] == "lru-cache-reference" }
+lru_probe = lru.dig("packet", "rubric").find { |criterion| criterion["id"] == "verification" }.fetch("probe")
+lru_answers = {
+  "correct" => <<~ANSWER,
+    Before running the suite I wrote the expected keys for capacity 2: put a, put b, get a, put c.
+    The get moves a to most recent, so c evicts b and keys should be [a, c]; a cache whose get did not refresh would evict a instead.
+    For an off-by-one in the eviction check I used capacity 1: put a, put b must leave keys == [b]; a check written as size >= capacity would evict on the first put and leave the cache empty.
+    The 100,000-operation groups would time out only if get or put scanned the entries; a wrong answer in the small groups means recency is off, a timeout means a linear step crept in.
+  ANSWER
+  "contradicts" => <<~ANSWER,
+    Only put changes the recency order; get just reads the value and leaves the order alone, so for capacity 2 the sequence put a, put b, get a, put c evicts a and leaves keys == [b, c].
+    I ran the full suite first and then reasoned backwards from whichever group failed rather than predicting a sequence up front.
+  ANSWER
+}
+lru_answers.each do |variant, answer|
+  answers = [{ "criterion_id" => "verification", "path" => "follow-up/verification.md", "prompt" => lru_probe, "status" => "answered",
+    "answer" => answer, "truncated" => false, "round_id" => "evaluation-fixture-round", "completed_at" => "2026-10-21T00:00:00Z" }]
+  defect_line = variant == "contradicts" ? 1 : nil
+  expect = { "source_criteria" => %w[correctness complexity boundaries], "process_criteria" => [],
+    "answered_process_criteria" => %w[verification],
+    "defect" => defect_line && { "criterion" => "verification", "path" => "follow-up/verification.md", "line" => defect_line } }
+  packets << { "case" => "lru-cache-followup-#{variant}", "expect" => expect, "packet" => lru["packet"].merge(
+    "files" => lru["packet"]["files"].merge(ReviewPacket.follow_up_files(answers)), "follow_up_answers" => answers,
+    "limitations" => [ReviewPacket::FOLLOW_UP_LIMITATION, "No execution logs are included. This is a local evaluator fixture, not personal practice history."]) }
 end
 # Rails track: one published exercise whose candidate snapshot is the editable starter files with the
 # controller replaced. The defect lets a query parameter choose the organization, which the brief forbids
@@ -56,8 +86,8 @@ rails_defect_line = rails_broken.lines.zip(rails_reference.lines).index { |mutat
     "exercise" => rails_exercise, "rubric" => rails_review.fetch("criteria"), "follow_up" => rails_review["follow_up"],
     "reviewer_guidance" => ReviewGuidance.for("rails"), "files" => files,
     "reference_alternative" => nil, "assistance" => [], "mode" => "guided", "practice_focus" => nil,
-    "rework" => nil, "executions" => [],
-    "limitations" => ["No voice or follow-up transcript is included in this code/design review packet. Do not infer communication, prompting, or independence from code alone.", "No execution logs are included. This is a local evaluator fixture, not personal practice history."]
+    "rework" => nil, "executions" => [], "follow_up_answers" => [],
+    "limitations" => [ReviewPacket::NO_FOLLOW_UP_LIMITATION, "No execution logs are included. This is a local evaluator fixture, not personal practice history."]
   } }
 end
 design_source = <<~NOTES
@@ -85,7 +115,7 @@ NOTES
                  { "id" => "scope", "title" => "Appropriate scope", "target" => "A coherent single-region approach without unnecessary multi-region or exactly-once machinery." }],
     "follow_up" => nil, "reviewer_guidance" => ReviewGuidance.for("system_design"),
     "files" => { "notes.md" => source }, "reference_alternative" => nil, "assistance" => [],
-    "mode" => "guided", "practice_focus" => nil, "rework" => nil, "executions" => [],
+    "mode" => "guided", "practice_focus" => nil, "rework" => nil, "executions" => [], "follow_up_answers" => [],
     "limitations" => ["No voice or follow-up transcript is included in this code/design review packet. Do not infer communication, prompting, or independence from the design alone.", "Author-created design regression fixture; no running system is involved."]
   } }
 end

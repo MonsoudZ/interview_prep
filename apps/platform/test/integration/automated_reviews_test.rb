@@ -162,8 +162,78 @@ class AutomatedReviewsTest < ActionDispatch::IntegrationTest
       packet=ReviewPacket.build(session)
       assert_equal record['revision'],packet.fetch("revision")
       assert_equal [],packet.fetch("executions")
+      assert_equal [],packet.fetch("follow_up_answers")
+      assert_includes packet.fetch("limitations"),ReviewPacket::NO_FOLLOW_UP_LIMITATION
       refute packet.fetch("rubric").empty?
     end
+  end
+  def followup_round(session,snapshot,answers,status:"completed")
+    content=PracticeContent.for(session.exercise_version)
+    questions=content.fetch("criteria").map{|c|{"id"=>c["id"],"title"=>c["title"],"kind"=>"criterion","prompt"=>c["probe"],"target"=>c["target"],"practice"=>c["practice"]}}
+    questions<<{"id"=>"extension","title"=>"Changed requirement","kind"=>"extension","prompt"=>content.fetch("follow_up"),"target"=>"Extension target.","practice"=>"Extension practice."}
+    session.followup_rounds.create!(source_snapshot:snapshot,client_request_id:SecureRandom.uuid,mode:"guided",content_version:content.fetch("version"),
+      questions:questions,duration_seconds:questions.length*120,status:status,answers:answers,question_index:(status=="completed" ? questions.length : 1),
+      started_at:1.hour.ago,completed_at:(status=="completed" ? Time.current : nil),completion_reason:(status=="completed" ? "all_questions" : nil))
+  end
+  test "review packets include only completed follow-up answers for the submitted revision as citable files" do
+    record=submission;session=InterviewSession.find(record['id'])
+    snapshot=session.source_snapshots.find_by!(revision:record['revision'])
+    ids=PracticeContent.for(session.exercise_version).fetch("criteria").map{|c|c.fetch("id")}
+    first,second,third=ids
+    answered=->(text){{"text"=>text,"status"=>"answered","saved_at"=>Time.current.iso8601}}
+    other=session.source_snapshots.create!(revision:"other-revision",files:{"solution.rb"=>"# other"})
+    followup_round(session,other,{first=>answered.call("Answer from another revision; not evidence for this one.")})
+    followup_round(session,snapshot,{first=>answered.call("Unfinished round text must not be visible.")},status:"active")
+    packet=ReviewPacket.build(session)
+    assert_equal [],packet.fetch("follow_up_answers")
+    assert_equal ["solution.rb"],packet.fetch("files").keys
+    assert_includes packet.fetch("limitations"),ReviewPacket::NO_FOLLOW_UP_LIMITATION
+    long="y"*(ReviewPacket::ANSWER_BYTES+500)
+    round=followup_round(session,snapshot,{first=>answered.call("I traced [1,3] and [2,6] by hand first.\nThen I checked the touching case."),
+      second=>{"text"=>"Skipped text is not evidence.","status"=>"skipped","saved_at"=>Time.current.iso8601},
+      third=>{"text"=>long,"status"=>"partial","saved_at"=>Time.current.iso8601},
+      "extension"=>answered.call("Extension answers are not rubric evidence.")})
+    packet=ReviewPacket.build(session)
+    answers=packet.fetch("follow_up_answers")
+    assert_equal [first,third],answers.map{|a|a.fetch("criterion_id")}
+    assert_equal ["follow-up/#{first}.md","follow-up/#{third}.md"],answers.map{|a|a.fetch("path")}
+    assert_equal PracticeContent.for(session.exercise_version).fetch("criteria").first.fetch("probe"),answers.first.fetch("prompt")
+    assert_equal ["answered","partial"],answers.map{|a|a.fetch("status")}
+    assert_equal [false,true],answers.map{|a|a.fetch("truncated")}
+    assert_equal ReviewPacket::ANSWER_BYTES,answers.last.fetch("answer").bytesize
+    assert_equal round.id,answers.first.fetch("round_id")
+    assert_equal ["solution.rb","follow-up/#{first}.md","follow-up/#{third}.md"],packet.fetch("files").keys
+    assert_equal answers.first.fetch("answer"),packet.fetch("files").fetch("follow-up/#{first}.md")
+    assert_includes packet.fetch("limitations"),ReviewPacket::FOLLOW_UP_LIMITATION
+    refute_includes response.body,"Unfinished round text"
+    refute packet.fetch("files").key?("follow-up/extension.md")
+    refute packet.fetch("files").key?("follow-up/#{second}.md")
+    refute Workspace.editable?("follow-up/#{first}.md")
+    refute Workspace.editable?("follow-up/#{first}.md",session.exercise_version)
+    assert_raises(Workspace::Invalid){Workspace.validate!({"follow-up/#{first}.md"=>"x","solution.rb"=>"y"},session.exercise_version)}
+    travel 1.minute do
+      followup_round(session,snapshot,{first=>answered.call("Newest completed round wins.")})
+      assert_equal ["Newest completed round wins."],ReviewPacket.build(session).fetch("follow_up_answers").map{|a|a.fetch("answer")}
+    end
+    connect
+    [["follow-up/#{first}.md",1,2],["follow-up/#{second}.md",1,1],["follow-up/extension.md",1,1]].each do |path,from,to|
+      request_review(record);assert_response :accepted
+      leased=lease;report=report_for(leased)
+      report["criteria"][0].merge!("rating"=>"meets_target","evidence"=>[{"path"=>path,"start_line"=>from,"end_line"=>to}])
+      deliver(leased,report);assert_response :ok
+      failed=AutomatedReview.order(created_at: :desc).first
+      assert_equal "output_invalid",failed.error_code,path
+    end
+    request_review(record);assert_response :accepted
+    leased=lease;input=leased.fetch("job").fetch("input")
+    assert_equal ["Newest completed round wins."],input.fetch("follow_up_answers").map{|a|a.fetch("answer")}
+    report=report_for(leased)
+    report["criteria"].find{|c|c["id"]==first}.merge!("rating"=>"meets_target","reasoning"=>"The answer predicts the failing sequence.","evidence"=>[{"path"=>"follow-up/#{first}.md","start_line"=>1,"end_line"=>1}])
+    deliver(leased,report);assert_response :ok
+    get "/api/sessions/#{record['id']}/automated_review";assert_response :ok
+    result=body.fetch("review");assert_equal "completed",result.fetch("status")
+    cited=result.fetch("report").fetch("criteria").find{|c|c["id"]==first}.fetch("evidence").first
+    assert_equal({"path"=>"follow-up/#{first}.md","start_line"=>1,"end_line"=>1,"excerpt"=>"Newest completed round wins."},cited)
   end
   test "review gateway has a separate authentication secret" do
     post "/internal/reviews/heartbeat",params:{worker_id:@worker,model:@model,model_digest:@digest},as: :json

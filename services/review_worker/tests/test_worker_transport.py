@@ -14,7 +14,7 @@ class WorkerTransportTests(unittest.TestCase):
         key = 'synthetic-transport-key-' + 'x' * 32
         worker_id = '77777777-7777-4777-8777-777777777777'
         digest = 'a' * 64
-        packet = {'prompt_version': 'senior-review-v8', 'files': {'solution.rb': '# synthetic transport fixture, not real feedback'}}
+        packet = {'prompt_version': 'senior-review-v9', 'files': {'solution.rb': '# synthetic transport fixture, not real feedback'}}
         report = {'summary': 'Synthetic transport fixture; no model judgment.'}
         seen = []
         test = self
@@ -34,7 +34,7 @@ class WorkerTransportTests(unittest.TestCase):
                 test.assertEqual('Bearer ' + key, self.headers.get('Authorization'))
                 if self.path == '/internal/reviews/lease':
                     self.reply({'job': {'id': job_id, 'revision': 'frozen-revision',
-                               'prompt_version': 'senior-review-v8', 'input': packet}, 'lease_token': 'fixture-lease'})
+                               'prompt_version': 'senior-review-v9', 'input': packet}, 'lease_token': 'fixture-lease'})
                 else: self.reply({'ok': True})
             def reply(self, body):
                 data = json.dumps(body).encode()

@@ -19,11 +19,19 @@ const errors = {
   model_changed:
     "The installed model changed during this review. Retry with a stable model version.",
 };
+const FOLLOW_UP_PREFIX = "follow-up/";
+// Citations into follow-up/<criterion>.md quote the typed follow-up answer, not a submitted file.
+export function citationLabel(path) {
+  const value = String(path || "");
+  return value.startsWith(FOLLOW_UP_PREFIX)
+    ? `Follow-up answer · ${value.slice(FOLLOW_UP_PREFIX.length).replace(/\.md$/, "")}`
+    : value;
+}
 export function renderCitations(items = []) {
   return items
     .map(
       (item) =>
-        `<details class="ai-citation"><summary>${esc(item.path)}:${item.start_line}–${item.end_line}</summary><pre>${esc(item.excerpt)}</pre></details>`,
+        `<details class="ai-citation"><summary>${esc(citationLabel(item.path))}:${item.start_line}–${item.end_line}</summary><pre>${esc(item.excerpt)}</pre></details>`,
     )
     .join("");
 }

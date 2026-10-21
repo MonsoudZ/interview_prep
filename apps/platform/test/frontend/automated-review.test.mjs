@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  citationLabel,
   renderAutomatedReport,
   renderReasoningMode,
   renderReviewGuidance,
@@ -89,4 +90,37 @@ test("reasoning-mode provenance distinguishes a fallback answer from an unknown 
   assert.equal(renderReasoningMode({ input_tokens: 1 }), "");
   assert.ok(renderReasoningMode({ reasoning: 1 }).includes("Reasoning mode: on"));
   assert.ok(renderReasoningMode({ reasoning: 0 }).includes("budget ran out"));
+});
+
+test("citations into follow-up answers are labeled as typed answers and stay escaped", () => {
+  assert.equal(citationLabel("solution.rb"), "solution.rb");
+  assert.equal(citationLabel("follow-up/verification.md"), "Follow-up answer · verification");
+  const html = renderAutomatedReport(
+    {
+      summary: "ok",
+      findings: [],
+      strengths: [],
+      criteria: [
+        {
+          id: "verification",
+          rating: "meets_target",
+          reasoning: "Predicted the failing sequence.",
+          evidence: [
+            {
+              path: "follow-up/verification.md",
+              start_line: 1,
+              end_line: 1,
+              excerpt: "<b>put a, put b, get a, put c</b>",
+            },
+          ],
+        },
+      ],
+      understanding_checks: [],
+      limitations: [],
+    },
+    [{ id: "verification", title: "Reasoned about the oracle" }],
+  );
+  assert.ok(html.includes("Follow-up answer · verification:1–1"));
+  assert.ok(html.includes("&lt;b&gt;put a"));
+  assert.ok(!html.includes("<b>put a"));
 });
