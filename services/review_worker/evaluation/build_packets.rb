@@ -13,7 +13,7 @@ packets = %w[lru-cache rate-limiter].flat_map do |slug|
     reference.sub("now - stamps.first >= @window", "now - stamps.first > @window")
   end
   raise "Mutation did not apply" if broken == reference
-  defect_line = broken.lines.index { |line| line != reference.lines[broken.lines.index(line)] } + 1
+  defect_line = broken.lines.zip(reference.lines).index { |mutated, original| mutated != original } + 1
   [["reference", reference], ["defect", broken]].map do |variant, source|
     # Author expectations: which criterion the planted defect violates, where it is, and which source
     # criteria must stay independent of it. Process criteria cannot be observed from source alone.
@@ -29,6 +29,36 @@ packets = %w[lru-cache rate-limiter].flat_map do |slug|
       "limitations" => ["No voice or follow-up transcript is included in this code/design review packet. Do not infer communication, prompting, or independence from code alone.", "No execution logs are included. This is a local evaluator fixture, not personal practice history."]
     } }
   end
+end
+# Rails track: one published exercise whose candidate snapshot is the editable starter files with the
+# controller replaced. The defect lets a query parameter choose the organization, which the brief forbids
+# ("Query parameters cannot select another organization"; identity comes only from the authenticated user).
+rails_base = root.join("curriculum/rails/tenant-projects")
+rails_exercise = JSON.parse(File.read(rails_base.join("exercise.json")))
+rails_exercise["track"] ||= "rails"
+rails_exercise["brief"] = File.read(rails_base.join("starter/BRIEF.md"))
+rails_review = JSON.parse(File.read(rails_base.join("review.json")))
+controller = "app/controllers/projects_controller.rb"
+starter_files = Dir.glob(rails_base.join("starter/**/*.rb")).sort.to_h { |path|
+  [Pathname.new(path).relative_path_from(rails_base.join("starter")).to_s, File.read(path)]
+}.select { |path, _| Workspace.editable?(path) }
+rails_reference = File.read(rails_base.join("reference", controller))
+rails_broken = rails_reference.sub("Project.where(organization_id: @user.organization_id)",
+  "Project.where(organization_id: params[:organization_id].presence || @user.organization_id)")
+raise "Mutation did not apply" if rails_broken == rails_reference
+rails_defect_line = rails_broken.lines.zip(rails_reference.lines).index { |mutated, original| mutated != original } + 1
+[["reference", rails_reference], ["defect", rails_broken]].each do |variant, source|
+  files = starter_files.merge(controller => source)
+  expect = { "source_criteria" => %w[boundary authorization safe_updates], "process_criteria" => %w[debugging],
+    "defect" => variant == "defect" ? { "criterion" => "boundary", "path" => controller, "line" => rails_defect_line } : nil }
+  packets << { "case" => "tenant-projects-#{variant}", "expect" => expect, "packet" => {
+    "prompt_version" => ReviewPacket::PROMPT_VERSION, "revision" => Digest::SHA256.hexdigest(JSON.generate(files)),
+    "exercise" => rails_exercise, "rubric" => rails_review.fetch("criteria"), "follow_up" => rails_review["follow_up"],
+    "reviewer_guidance" => ReviewGuidance.for("rails"), "files" => files,
+    "reference_alternative" => nil, "assistance" => [], "mode" => "guided", "practice_focus" => nil,
+    "rework" => nil, "executions" => [],
+    "limitations" => ["No voice or follow-up transcript is included in this code/design review packet. Do not infer communication, prompting, or independence from code alone.", "No execution logs are included. This is a local evaluator fixture, not personal practice history."]
+  } }
 end
 design_source = <<~NOTES
   The service starts in one region. Each accepted event must survive one machine failure.
