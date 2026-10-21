@@ -16,6 +16,7 @@ class SessionTimelineTest < ActionDispatch::IntegrationTest
 
   test "timeline replays saved revisions with changed paths, hints, runs and the diff for one step" do
     exercise = ExerciseVersion.find_by!(slug: "repository-events", version: 1)
+    travel_to Time.current.change(usec: 0) # travel floors to whole seconds; a fractional start skews offsets
     post "/api/sessions", params: { exercise_id: exercise.id, mode: "guided" }, as: :json
     assert_response :created
     id, revision = body.fetch("id"), body.fetch("revision")
