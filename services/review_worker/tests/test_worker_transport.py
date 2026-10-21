@@ -14,7 +14,7 @@ class WorkerTransportTests(unittest.TestCase):
         key = 'synthetic-transport-key-' + 'x' * 32
         worker_id = '77777777-7777-4777-8777-777777777777'
         digest = 'a' * 64
-        packet = {'prompt_version': 'senior-review-v1', 'files': {'solution.rb': '# synthetic transport fixture, not real feedback'}}
+        packet = {'prompt_version': 'senior-review-v8', 'files': {'solution.rb': '# synthetic transport fixture, not real feedback'}}
         report = {'summary': 'Synthetic transport fixture; no model judgment.'}
         seen = []
         test = self
@@ -27,14 +27,14 @@ class WorkerTransportTests(unittest.TestCase):
                 data = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
                 seen.append((self.path, data))
                 if self.path == '/api/chat':
-                    test.assertEqual(packet, json.loads(data['messages'][1]['content']))
+                    test.assertEqual({**packet, 'files': {'solution.rb': '1| # synthetic transport fixture, not real feedback'}}, json.loads(data['messages'][1]['content']))
                     test.assertFalse(data['stream'])
                     self.reply({'done': True, 'done_reason': 'stop', 'message': {'content': json.dumps(report)}})
                     return
                 test.assertEqual('Bearer ' + key, self.headers.get('Authorization'))
                 if self.path == '/internal/reviews/lease':
                     self.reply({'job': {'id': job_id, 'revision': 'frozen-revision',
-                               'prompt_version': 'senior-review-v1', 'input': packet}, 'lease_token': 'fixture-lease'})
+                               'prompt_version': 'senior-review-v8', 'input': packet}, 'lease_token': 'fixture-lease'})
                 else: self.reply({'ok': True})
             def reply(self, body):
                 data = json.dumps(body).encode()

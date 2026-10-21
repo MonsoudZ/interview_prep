@@ -1,0 +1,24 @@
+# Local reviewer evaluation
+
+Run from the repository root with Ollama and the native Rails dependencies available:
+
+```sh
+python3 services/review_worker/evaluate.py --output artifacts/reviewer-evaluation/run-001
+```
+
+The output directory must be new. Use `--case lru-cache-reference` to select one case. Add `--thinking` to evaluate reasoning mode (the production default, including its fall back to the fast setting when the reasoning budget is exhausted, recorded as `reasoning: 0` in usage) or omit it for the fast setting; `--rescore` re-applies the semantic checks to an existing output directory without inference. No Linux worker is needed. The harness builds packets from published Ruby exercises and the production guidance selector, invokes the real local provider, and validates each result with the actual Rails report validator. It never creates accounts, submissions, or ratings. Output contains the exact packet, model digest, prompt digest/version, raw report, usage, and contract-validation result.
+
+Contract success is not a semantic pass. Each case also carries author-specified expectations that the harness checks automatically and records under `semantic` in each report and in `summary.json`: `missed_defect` and `defect_uncited` for planted defects, `leaked_criteria` when a defect lowers an independent source criterion, `unsupported_downgrades` and `unsupported_major_findings` for reference solutions, `process_criteria_rated` when a criterion about the candidate's explanation is rated without any transcript, and `execution_observations_without_runs`. Every flag is a separate failure mode. The exit status is non-zero when any report is invalid or any flag is set. The flags cover only the planted expectations; read the full reports against this table:
+
+| Case | Expected behavior |
+| --- | --- |
+| LRU reference | Accept insertion-ordered Hash as a valid solution. No mandatory linked list; no invented correctness issues. Missing logs alone cannot reduce source ratings. |
+| LRU defect | Identify that `get` fails to refresh recency, with a valid source citation and failing sequence. Do not claim that this makes the operation slower than O(1). |
+| Rate limiter reference | Accept the stated single-process contract. No Redis, distributed locking, or multi-server requirement from the separate follow-up. |
+| Rate limiter defect | Detect incorrect expiry at the exact boundary: with limit 1/window 10, an accepted request at time 0 must not block time 10. |
+| Durable intake reference | Accept synchronous durable replication before acknowledgment under the stated single-machine-failure assumption. No added multi-region, exactly-once, or unrelated security checklist. |
+| Durable intake defect | Identify the acknowledged-event loss window before asynchronous persistence. A crash in that window violates the requirement even though later replication is described. |
+
+For every case: preserve exact rubric IDs and source citations; no execution observations when runs are absent; no invented candidate explanation or hiring verdict. A reference implementation need not earn `meets_target` for a process/communication criterion that cannot be observed from source.
+
+These are development regression cases, not a held-out benchmark or human-calibrated scoring set. The LRU cases were already used to improve the prompt. The rate-limiter pair is an initial transfer check; future tuning on it makes it a regression example too. Track missed defects, unsupported findings, criterion leakage, and latency separately. Do not turn schema-valid reports into an accuracy percentage.

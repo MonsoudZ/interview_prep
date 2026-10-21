@@ -10,12 +10,13 @@ from urllib.request import Request, HTTPRedirectHandler, ProxyHandler, build_ope
 ROOT = Path(__file__).parent
 SCHEMA = json.loads((ROOT / 'report.schema.json').read_text())
 PROMPT = (ROOT / 'prompt.txt').read_text()
-PROMPT_VERSION = 'senior-review-v1'
+PROMPT_VERSION = 'senior-review-v8'
 
 class ReviewError(Exception):
-    def __init__(self, code, http_status=None):
+    def __init__(self, code, http_status=None, detail=None):
         super().__init__(code)
         self.http_status = http_status
+        self.detail = detail  # diagnostic only; never sent to the app
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, *args, **kwargs):
         raise ReviewError('model_unavailable')
@@ -46,13 +47,23 @@ def request(url, path, body=None, key=None, timeout=15, limit=1048576):
     except (URLError, OSError, json.JSONDecodeError) as error:
         raise ReviewError('model_unavailable') from error
 
+def numbered(packet):
+    """Present each submitted file with 1-based line prefixes so citations use real line numbers. The stored packet is unchanged."""
+    files=packet.get('files')
+    if not isinstance(files,dict): return packet
+    shown={path:''.join(f'{n}| {line}' for n,line in enumerate(str(text).splitlines(keepends=True),1)) for path,text in files.items()}
+    return {**packet,'files':shown}
+
 class Ollama:
-    def __init__(self, url, model, context=32768):
+    def __init__(self, url, model, context=32768, thinking=False):
         self.url=check_origin(url,local=True)
         if not model or len(model)>100 or model.endswith((':cloud','-cloud')):
             raise ValueError('Choose an explicitly installed local model')
         if context not in (32768,65536): raise ValueError('Use a bounded 32768 or 65536 token context')
-        self.model=model; self.context=context
+        self.model=model; self.context=context; self.thinking=thinking
+    # Reasoning tokens count toward the output budget, so thinking mode needs a larger cap and a longer wait.
+    def max_output_tokens(self,thinking): return 10000 if thinking else 6000
+    def timeout(self,thinking): return 780 if thinking else 240
     def digest(self):
         tags=request(self.url,'/api/tags')
         item=next((m for m in tags.get('models',[]) if m.get('name')==self.model),None)
@@ -65,19 +76,28 @@ class Ollama:
         return digest
     def review(self, packet, expected_digest):
         if self.digest()!=expected_digest: raise ReviewError('model_changed')
-        content=json.dumps(packet,ensure_ascii=True,separators=(',',':'))
+        content=json.dumps(numbered(packet),ensure_ascii=True,separators=(',',':'))
         # Conservative byte budget; fail instead of silently reviewing a truncated submission.
         if len((PROMPT+content).encode())>self.context-6000-2048:
             raise ReviewError('context_too_large')
         started=time.monotonic()
-        response=request(self.url,'/api/chat',{'model':self.model,
-          'messages':[{'role':'system','content':PROMPT},{'role':'user','content':content}],
-          'stream':False,'think':False,'format':SCHEMA,'keep_alive':'5m',
-          'options':{'temperature':0,'num_ctx':self.context,'num_predict':6000}}, timeout=240)
-        if response.get('done') is not True or response.get('done_reason')=='length': raise ReviewError('output_invalid')
+        response=self.generate(content,self.thinking)
+        reasoning=self.thinking
+        if reasoning and response.get('done') is True and response.get('done_reason')=='length':
+            # The model exhausted its reasoning budget. Deterministic decoding would repeat that, so answer
+            # without reasoning rather than leave this submission permanently unreviewable. Recorded in usage.
+            response=self.generate(content,False); reasoning=False
+        if response.get('done') is not True or response.get('done_reason')=='length':
+            raise ReviewError('output_invalid', detail={'done_reason':response.get('done_reason'),'output_tokens':response.get('eval_count',0),
+              'duration_seconds':round(time.monotonic()-started,3)})
         try: report=json.loads(response['message']['content'])
         except (KeyError,TypeError,json.JSONDecodeError) as error: raise ReviewError('output_invalid') from error
         if not isinstance(report,dict) or len(json.dumps(report).encode())>80000: raise ReviewError('output_invalid')
         if self.digest()!=expected_digest: raise ReviewError('model_changed')
         return report, {'input_tokens':response.get('prompt_eval_count',0),
-          'output_tokens':response.get('eval_count',0),'duration_seconds':round(time.monotonic()-started,3)}
+          'output_tokens':response.get('eval_count',0),'duration_seconds':round(time.monotonic()-started,3),'reasoning':int(reasoning)}
+    def generate(self,content,thinking):
+        return request(self.url,'/api/chat',{'model':self.model,
+          'messages':[{'role':'system','content':PROMPT},{'role':'user','content':content}],
+          'stream':False,'think':thinking,'format':SCHEMA,'keep_alive':'5m',
+          'options':{'temperature':0,'num_ctx':self.context,'num_predict':self.max_output_tokens(thinking)}}, timeout=self.timeout(thinking))

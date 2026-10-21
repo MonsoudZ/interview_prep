@@ -45,7 +45,7 @@ class AutomatedReviewsTest < ActionDispatch::IntegrationTest
   end
   def deliver(leased,report=report_for(leased),extra={})
     job=leased.fetch("job")
-    post "/internal/reviews/#{job.fetch('id')}/result",params:{lease_token:leased.fetch("lease_token"),revision:job.fetch("revision"),prompt_version:job.fetch("prompt_version"),model:@model,model_digest:@digest,status:"completed",report:report,usage:{input_tokens:10,output_tokens:20,duration_seconds:1.0}}.merge(extra),as: :json,headers:{"Authorization"=>"Bearer #{ENV.fetch('INTERVIEW_REVIEW_BRIDGE_KEY')}"}
+    post "/internal/reviews/#{job.fetch('id')}/result",params:{lease_token:leased.fetch("lease_token"),revision:job.fetch("revision"),prompt_version:job.fetch("prompt_version"),model:@model,model_digest:@digest,status:"completed",report:report,usage:{input_tokens:10,output_tokens:20,duration_seconds:1.0,reasoning:1,mode:"dropped"}}.merge(extra),as: :json,headers:{"Authorization"=>"Bearer #{ENV.fetch('INTERVIEW_REVIEW_BRIDGE_KEY')}"}
   end
   test "offline workers cannot create a misleading review or queue and owner boundaries apply" do
     record=submission
@@ -75,6 +75,8 @@ class AutomatedReviewsTest < ActionDispatch::IntegrationTest
     assert_equal ["solution.rb"],packet.fetch("files").keys
     refute packet.key?("account")
     assert_equal "guided",packet.fetch("mode")
+    frozen_guidance = packet.fetch("reviewer_guidance").deep_dup
+    assert_equal "public-interview-guidance-v2", frozen_guidance.fetch("version")
     report=report_for(leased)
     report["criteria"][0].merge!("rating"=>"needs_development","reasoning"=>"The implementation remains a placeholder.","evidence"=>[{"path"=>"solution.rb","start_line"=>1,"end_line"=>3}])
     deliver(leased,report);assert_response :ok
@@ -82,6 +84,9 @@ class AutomatedReviewsTest < ActionDispatch::IntegrationTest
     result=body.fetch("review")
     assert_equal "completed",result.fetch("status")
     assert_equal @digest,result.fetch("model_digest")
+    assert_equal frozen_guidance.fetch("digest"), result.fetch("guidance").fetch("digest")
+    assert_equal({"input_tokens"=>10,"output_tokens"=>20,"duration_seconds"=>1.0,"reasoning"=>1}, result.fetch("usage"))
+    assert_equal frozen_guidance, AutomatedReview.sole.reload.input.fetch("reviewer_guidance")
     assert_includes result.fetch("report").fetch("criteria")[0].fetch("evidence")[0].fetch("excerpt"),"Implement the published contract"
     assert_equal 0,SessionReview.count
     deliver(leased,report_for(leased));assert_response :ok
@@ -126,6 +131,27 @@ class AutomatedReviewsTest < ActionDispatch::IntegrationTest
       deliver(leased);assert_response :ok
       assert_nil AutomatedReview.sole.report
     end
+  end
+  test "heartbeats from the leasing worker extend a long running review up to a hard cap" do
+    record=submission;connect;request_review(record);leased=lease
+    started=AutomatedReview.sole.updated_at
+    release=->{AutomatedReview.sole.update_columns(status:"running",error_code:nil,report:nil,lease_expires_at:started+6.minutes,updated_at:started)}
+    travel(5.minutes){worker_post("heartbeat",{worker_id:SecureRandom.uuid,model:@model,model_digest:@digest});assert_response :ok}
+    travel(7.minutes){get "/api/sessions/#{record['id']}/automated_review";assert_equal "failed",body.fetch("review").fetch("status"),"another worker's heartbeat must not extend this lease"}
+    release.call
+    travel(5.minutes){connect}
+    travel(7.minutes){get "/api/sessions/#{record['id']}/automated_review";assert_equal "running",body.fetch("review").fetch("status")}
+    travel(10.minutes){connect}
+    travel(15.minutes){connect}
+    travel 17.minutes do
+      get "/api/sessions/#{record['id']}/automated_review";assert_equal "running",body.fetch("review").fetch("status")
+      deliver(leased);assert_response :ok
+      assert_equal "completed",AutomatedReview.sole.status
+    end
+    release.call
+    travel(19.minutes){connect}
+    travel(21.minutes){connect}
+    travel(22.minutes){get "/api/sessions/#{record['id']}/automated_review";assert_equal "failed",body.fetch("review").fetch("status"),"heartbeats cannot extend a lease past the hard cap"}
   end
   test "review packets support all tracks and omit runs from other revisions" do
     %w[repository-events merge-intervals webhook-delivery].each do |slug|

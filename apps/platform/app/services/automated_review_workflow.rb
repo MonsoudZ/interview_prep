@@ -37,7 +37,8 @@ class AutomatedReviewWorkflow
       review: review && { id: review.id, status: review.status, revision: review.source_snapshot.revision,
         created_at: review.created_at, updated_at: review.updated_at, model: review.model, model_digest: review.model_digest,
         prompt_version: review.prompt_version, content_version: review.content_version,
-        report: review.report, error_code: review.error_code, usage: review.usage },
+        report: review.report, error_code: review.error_code, usage: review.usage,
+        guidance: ReviewGuidance.provenance(review.input["reviewer_guidance"]) },
       notice: "Local-model feedback is advisory. Source citations are checked, but judgments may be wrong. This is not a calibrated hiring score." }
   end
 end

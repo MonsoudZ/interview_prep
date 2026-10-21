@@ -1,4 +1,48 @@
-# Studio integration verification — 2026-10-18
+# Studio integration verification
+
+## Real-model setup — 2026-10-21
+
+Verified on the 64 GB Apple M4 Max Studio with Ollama 0.40.6:
+
+- Installed `qwen3.5:27b`, digest `sha256:2d2e4b8fc7c0479b70f8cba9fc8bdb49a3c9a43a8a6da3873b724c9fca4672ef`. Ollama reported the MLX runner, 100% GPU, approximately 20 GB loaded, and a 32,768-token context. This is a loaded-size observation, not a peak-memory benchmark.
+- Configured private app/reviewer credentials and started `python3 services/local_vm/dev.py start --review-only`. The app returned HTTP 200 and the database showed a recent authenticated heartbeat for the installed model. Colima and the Linux execution worker are not configured on this Studio.
+- Ran real inference through the existing provider, schema, and prompt using the repository's LRU reference source, separately from user practice history. The initial v1 result took 69.7 seconds and failed server validation: it categorized missing logs as an execution observation without an execution ID. It also penalized correct source solely because runs were absent.
+- Versioned the clarified evidence instructions as `senior-review-v2` in both app and worker. The reference rerun took 48.1 seconds (2,098 input / 1,043 output tokens), produced no findings, rated the three source criteria `meets_target`, and left candidate testing-process evidence `not_observed`. The actual Rails report validator accepted it.
+- A second v2 check removed the recency update from `get`. In 60.4 seconds (2,088 input / 1,370 output tokens), the model identified that defect and the actual Rails report validator accepted the report. It also added an unsupported preference for linked lists and conflated recency correctness with complexity. These remaining semantic issues mean this is not a calibrated reviewer.
+- Passed 3 review-only launcher tests, 2 Studio transfer tests, 7 review-provider/transport tests, and 7 Rails automated-review integration tests (126 assertions). Diff whitespace checks passed.
+
+Local setup evidence is under ignored `artifacts/model-validation/`: reference and mutated packets, raw reports, the original rejected v1 report, and the smoke script. No synthetic practice submissions or self-ratings were written to the user's development history. These checks establish direct provider inference, report validation, and app/worker connectivity; they do not establish a complete real-model browser-to-queue-to-callback review, Rails/design model accuracy, repeated-run consistency, or held-out calibration. The two LRU examples were setup checks and must not be counted as held-out evaluation.
+
+## Public guidance and reasoning mode — 2026-10-21
+
+Same Studio, same model digest, prompt `senior-review-v3` with the public guidance catalog `public-interview-guidance-v2`, using the local evaluator's six fixtures (reference and planted-defect pairs for the LRU cache, the rate limiter, and a durable-intake design note). Reports are under ignored `artifacts/reviewer-evaluation/`. No practice history was written.
+
+Fast setting (`think: false`), four Ruby cases, 50–90 seconds each: the LRU reference's complexity criterion was downgraded for using two hash operations and for missing logs, contrary to the instructions; the LRU defect was found but lowered the independent complexity and boundary criteria too; the rate-limiter defect (strict `>` where the brief requires `>=` expiry) was missed entirely, with the report asserting the operator matched the brief. The rate-limiter reference was clean.
+
+Reasoning setting (`think: true`): LRU reference clean in 230 seconds (5,685 output tokens); rate-limiter reference clean in 221 seconds; rate-limiter defect identified with the contradiction of the brief stated, but cited line 20 instead of the actual line 28; durable-intake defect identified and cited correctly in 182 seconds. The LRU defect and durable-intake reference cases exhausted a 14,000-token output budget after roughly nine minutes each and produced no report.
+
+Changes made from these results: reasoning mode is the default for new configurations, with the budget set at 10,000 output tokens (successful runs used 4,700 to 8,400) and an automatic fall back to the fast setting when the budget is exhausted, recorded as `reasoning: 0` in the saved usage and shown in the review's provenance. Worker heartbeats now extend the running review's lease, capped at twenty minutes from the lease. Prompt `senior-review-v8` adds literal operator comparison against the brief, says that returning exactly what the brief specifies is never a gap (fast-mode reports repeatedly demanded a sentinel so `get` could distinguish a stored nil from an absent key), states that packet.files is the candidate's submission and that design notes plus diagram are the design (a v6 fast-mode run reported that nothing was submitted for both design fixtures and rated everything not_observed), states that rubric probe and practice fields are questions rather than requirements (a v5 reasoning run downgraded the correct LRU reference for the nil-handling probe), and the worker now shows the model each submitted file with `N| ` line prefixes (presentation only; the stored packet is unchanged) because both reasoning and fast reports cited lines one to eight short of the real ones when asked to count. The evaluator now records author-specified semantic flags per case (missed defect, uncited defect, leaked criteria, unsupported downgrades, process criteria rated without evidence, execution observations without runs) and can rescore an existing run.
+
+Partial check of the fall back with prompt v4 (stopped after two cases once v5 superseded it): the LRU reference was clean in 283 seconds using 7,029 output tokens, and the LRU defect exhausted the 9,000-token reasoning budget, fell back, and completed in 417 seconds total with the defect identified, no leaked criteria, and citations one line short.
+
+Full six-case run, reasoning mode with fall back, prompt `senior-review-v7` (v8 differs from it by one sentence about stated return contracts, verified only in the fast run below):
+
+| Case | Mode used | Seconds | Semantic flags |
+| --- | --- | --- | --- |
+| LRU reference | reasoning | 257 | clean |
+| LRU defect | fell back after budget exhaustion | 468 | defect found and cited; boundaries also lowered (sentinel demand) |
+| Rate limiter reference | reasoning | 212 | clean |
+| Rate limiter defect | reasoning | 243 | defect found and cited; memory and boundaries also lowered |
+| Durable intake reference | fell back after budget exhaustion | 419 | clean |
+| Durable intake defect | reasoning | 368 | clean |
+
+Full six-case run, fast setting, prompt `senior-review-v8`, 33–82 seconds per case: the LRU reference's complexity criterion was again lowered for missing execution logs; the LRU defect was found but boundaries was lowered for the same sentinel demand; the rate-limiter defect was missed again with boundaries lowered by a vague reference to it; the rate-limiter reference and both design cases were clean.
+
+Reading across runs: reasoning mode has never missed a planted defect in these fixtures, while the fast setting missed the rate-limiter boundary in every attempt and keeps inventing a nil sentinel requirement. Reasoning mode exhausted its budget in two of six cases per run (which case varies between runs with the same prompt and temperature 0), and the same prompt text produced different leakage on repeat runs, so one run cannot confirm or refute a prompt change; expect three to eight minutes per review and read the leaked-criteria flags as a known residual weakness.
+
+These remain six author-written regression fixtures that have now been used to tune the prompt and the mode; they are not held-out evidence of accuracy on new submissions, Rails exercises, or real candidate explanations.
+
+## Historical integration checks — 2026-10-18
 
 Completed on the existing development Mac, **not on the user's M4 Max Studio**:
 

@@ -27,6 +27,31 @@ export function renderCitations(items = []) {
     )
     .join("");
 }
+export function renderReasoningMode(usage) {
+  if (!usage || usage.reasoning === undefined || usage.reasoning === null)
+    return "";
+  return `<br>Reasoning mode: ${Number(usage.reasoning) === 1 ? "on" : "off (the reasoning budget ran out, so this review was produced without reasoning)"}`;
+}
+export function renderReviewGuidance(guidance) {
+  if (!guidance?.sources?.length) return "";
+  const sources = guidance.sources
+    .map((source) => {
+      let url = "";
+      try {
+        const parsed = new URL(source.url);
+        if (
+          parsed.protocol === "https:" &&
+          !parsed.username &&
+          !parsed.password
+        )
+          url = parsed.href;
+      } catch {}
+      const title = `${esc(source.company)}: ${esc(source.title)}`;
+      return `<li>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${title}</a>` : title}<br>${esc(source.kind)} · checked ${esc(source.checked_on)}</li>`;
+    })
+    .join("");
+  return `<details class="ai-criterion"><summary>Public preparation sources</summary><p>These sources inform coaching. Your exercise rubric determines ratings; these are not company hiring scores.</p><ul>${sources}</ul><p>Guidance: ${esc(guidance.version)}<br>Digest: <code>${esc(guidance.digest)}</code></p></details>`;
+}
 export function renderAutomatedReport(report, criteria) {
   const lookup = new Map(
     criteria.map((criterion) => [criterion.id, criterion]),
@@ -83,7 +108,7 @@ export function mountAutomatedReview(host, session, criteria, { api, signal }) {
       ${!state?.available && !pending && review?.status !== "completed" ? "<p>Connect the review worker on your Mac Studio to generate feedback. Your saved work and self-review remain available.</p>" : ""}
       ${review?.status !== "completed" ? `<button type="button" id="generate-feedback" ${!state?.available || pending || generating ? "disabled" : ""}>${review?.status === "failed" ? "Retry review" : "Generate review"}</button>` : ""}
       <p class="error" role="alert">${esc(error)}</p>
-      ${review?.status === "completed" ? `<p class="ai-provenance">${esc(review.model)} · submitted revision ${esc(review.revision.slice(0, 10))}. Review judgments are not a calibrated hiring score.</p>${renderAutomatedReport(review.report, criteria)}<details class="ai-criterion"><summary>Review provenance</summary><p>Model digest: <code>${esc(review.model_digest)}</code><br>Rubric: ${esc(review.content_version)}<br>Reviewer instructions: ${esc(review.prompt_version)}</p></details>` : ""}`;
+      ${review?.status === "completed" ? `<p class="ai-provenance">${esc(review.model)} · submitted revision ${esc(review.revision.slice(0, 10))}. Review judgments are not a calibrated hiring score.</p>${renderAutomatedReport(review.report, criteria)}${renderReviewGuidance(review.guidance)}<details class="ai-criterion"><summary>Review provenance</summary><p>Model digest: <code>${esc(review.model_digest)}</code><br>Rubric: ${esc(review.content_version)}<br>Reviewer instructions: ${esc(review.prompt_version)}${renderReasoningMode(review.usage)}</p></details>` : ""}`;
     const button = host.querySelector("#generate-feedback");
     if (button)
       button.onclick = async () => {

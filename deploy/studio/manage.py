@@ -70,7 +70,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     sub=parser.add_subparsers(dest='command',required=True)
     sub.add_parser('doctor')
-    configure=sub.add_parser('configure');configure.add_argument('--image',required=True);configure.add_argument('--model',default='qwen3.5:27b');configure.add_argument('--context',type=int,choices=[32768,65536],default=32768)
+    configure=sub.add_parser('configure');configure.add_argument('--image');configure.add_argument('--review-only',action='store_true');configure.add_argument('--model',default='qwen3.5:27b');configure.add_argument('--context',type=int,choices=[32768,65536],default=32768);configure.add_argument('--thinking',choices=['on','off'],default='on')
     backup=sub.add_parser('backup');backup.add_argument('--output',required=True)
     restore=sub.add_parser('restore');restore.add_argument('--from-file',required=True)
     pack=sub.add_parser('package');pack.add_argument('--output',required=True)
@@ -80,7 +80,11 @@ def main():
         print(json.dumps({'ruby':bool(shutil.which('ruby')),'bundler':bool(shutil.which('bundle')),'colima':bool(shutil.which('colima')),'ollama':bool(shutil.which('ollama')),
           'private_configuration_present':CONFIG.is_file(),'database_present':database.is_file(),'free_disk_gib':round(shutil.disk_usage(ROOT).free/1024**3,1)},indent=2))
     elif args.command=='configure':
-        subprocess.run(['python3',str(ROOT/'services/local_vm/dev.py'),'init','--image',args.image,'--review-model',args.model,'--review-context',str(args.context)],check=True)
+        command=['python3',str(ROOT/'services/local_vm/dev.py'),'init','--review-model',args.model,'--review-context',str(args.context)]
+        if args.image: command.extend(['--image',args.image])
+        if args.review_only: command.append('--review-only')
+        command.extend(['--review-thinking',args.thinking])
+        subprocess.run(command,check=True)
         data=json.loads(CONFIG.read_text());data.setdefault('app_secret',secrets.token_hex(64));data.setdefault('cookie_name','_interview_studio_'+secrets.token_hex(4));save_config(CONFIG,data)
         print('Private central Studio configuration saved; no model/server/network access started.')
     elif args.command=='backup': backup_database(database,Path(args.output).expanduser().resolve());print('Consistent private practice-data backup created.')

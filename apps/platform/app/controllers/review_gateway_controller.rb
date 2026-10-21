@@ -4,6 +4,8 @@ class ReviewGatewayController < ActionController::API
     render json: { error: "Not found" }, status: :not_found
   end
   ERRORS = %w[model_unavailable context_too_large output_invalid inference_timeout worker_interrupted model_changed].freeze
+  LEASE_LENGTH = 6.minutes
+  LEASE_HARD_CAP = 20.minutes
 
   def heartbeat
     id, model, digest = params.values_at(:worker_id, :model, :model_digest)
@@ -12,6 +14,10 @@ class ReviewGatewayController < ActionController::API
     end
     worker = ReviewWorker.find_or_initialize_by(id: id)
     worker.update!(model: model, model_digest: digest, last_seen_at: Time.current)
+    # A heartbeating worker keeps its own running review leased while long reasoning-mode inference continues.
+    # update_columns leaves updated_at at the lease time, so the hard cap is measured from when the work started.
+    running = AutomatedReview.find_by(worker_id: worker.id, status: "running", model_digest: digest)
+    running&.update_columns(lease_expires_at: [LEASE_LENGTH.from_now, running.updated_at + LEASE_HARD_CAP].min)
     render json: { ok: true }
   end
 
@@ -27,7 +33,7 @@ class ReviewGatewayController < ActionController::API
         candidate = AutomatedReview.where(status: "queued").order(:created_at).lock(lock).first
         if candidate
           candidate.update!(status: "running", worker_id: worker.id, model: worker.model, model_digest: worker.model_digest,
-            lease_digest: Digest::SHA256.hexdigest(token), lease_expires_at: 6.minutes.from_now)
+            lease_digest: Digest::SHA256.hexdigest(token), lease_expires_at: LEASE_LENGTH.from_now)
           review = candidate
         end
       end
@@ -56,7 +62,7 @@ class ReviewGatewayController < ActionController::API
         value = value.to_unsafe_h if value.is_a?(ActionController::Parameters)
         begin
           report = AutomatedReviewReport.check!(value, review.input)
-          usage = params[:usage].is_a?(ActionController::Parameters) ? params[:usage].permit(:input_tokens, :output_tokens, :duration_seconds).to_h : {}
+          usage = params[:usage].is_a?(ActionController::Parameters) ? params[:usage].permit(:input_tokens, :output_tokens, :duration_seconds, :reasoning).to_h : {}
           unless usage.values.all? { |number| number.is_a?(Numeric) && number.finite? && number.between?(0, 1_000_000_000) }
             raise Workspace::Invalid, "Invalid usage"
           end

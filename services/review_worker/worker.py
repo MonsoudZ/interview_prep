@@ -20,16 +20,17 @@ def main():
     parser.add_argument('--ollama',default='http://127.0.0.1:11434')
     parser.add_argument('--model',required=True)
     parser.add_argument('--context',type=int,default=32768)
+    parser.add_argument('--thinking',action='store_true',help='Let the model reason before answering; slower, but more accurate on correctness checks')
     parser.add_argument('--worker-id',required=True)
     parser.add_argument('--once',action='store_true')
     parser.add_argument('--doctor',action='store_true')
     args=parser.parse_args()
     base=check_origin(args.url)
     if str(uuid.UUID(args.worker_id))!=args.worker_id: raise ValueError('Use a canonical worker UUID')
-    model=Ollama(args.ollama,args.model,args.context)
+    model=Ollama(args.ollama,args.model,args.context,thinking=args.thinking)
     digest=model.digest()
     if args.doctor:
-        print(json.dumps({'ready':True,'provider':'local_ollama','model':args.model,'model_digest':digest,'context':args.context}));return
+        print(json.dumps({'ready':True,'provider':'local_ollama','model':args.model,'model_digest':digest,'context':args.context,'thinking':args.thinking}));return
     key=os.environ.get('INTERVIEW_REVIEW_BRIDGE_KEY','')
     if len(key.encode())<32: raise ValueError('Configure the private review bridge key')
     stopping=threading.Event()

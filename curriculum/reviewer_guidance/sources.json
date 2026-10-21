@@ -1,0 +1,76 @@
+{
+  "version": "public-interview-guidance-v2",
+  "sources": [
+    {
+      "id": "google-interview-preparation",
+      "company": "Google",
+      "title": "A Google engineer shares her technical interview tips",
+      "url": "https://blog.google/company-news/inside-google/life-at-google/google-engineer-shares-her-technical-interview-tips/",
+      "kind": "Public interview advice from an engineer",
+      "checked_on": "2026-10-21",
+      "tracks": [
+        "ruby",
+        "rails",
+        "system_design"
+      ],
+      "summary": "Practice explaining problem-solving aloud, review algorithms, and become familiar with the interview format. The engineer describes reasoning and tackling difficult problems as valuable even when the answer is imperfect; receiving hints is not automatically disqualifying.",
+      "application": "Use unanswered reasoning questions as practice prompts. Code alone does not reveal verbal communication or independence. This personal account is not Google's hiring scorecard."
+    },
+    {
+      "id": "google-code-review",
+      "company": "Google",
+      "title": "What to look for in a code review",
+      "url": "https://google.github.io/eng-practices/review/reviewer/looking-for.html",
+      "kind": "Engineering review guidance, not an interview rubric",
+      "checked_on": "2026-10-21",
+      "tracks": [
+        "ruby",
+        "rails"
+      ],
+      "summary": "Review behavior, edge cases, concurrency where relevant, design, and whether tests would detect broken behavior. Avoid speculative generality and unnecessary complexity. Personal style preferences should not block otherwise acceptable code.",
+      "application": "Distinguish demonstrated contract defects from preferences. Prefer a simple valid solution to an elaborate pattern unless the exercise requires the extra machinery. Do not import Google's internal style requirements into this exercise."
+    },
+    {
+      "id": "amazon-senior-interview",
+      "company": "Amazon",
+      "title": "SDE III / Senior SDE Interview Prep",
+      "url": "https://amazon.jobs/content/en/how-we-hire/sde-iii-interview-prep",
+      "kind": "Official senior engineering interview preparation",
+      "checked_on": "2026-10-21",
+      "tracks": [
+        "ruby",
+        "rails",
+        "system_design"
+      ],
+      "summary": "Coding preparation emphasizes executable code, boundary cases, robustness, efficiency, and maintainability. Design discussions involve clarifying and validating requirements, with attention to practical, reliable, efficient, and scalable solutions. Senior engineers are described as taking a system-wide architectural view.",
+      "application": "Suggest concrete boundary or tradeoff questions relevant to the published task. A small coding exercise does not acquire distributed-system requirements from this guide. General testing advice does not prove that missing execution logs indicate bad code."
+    },
+    {
+      "id": "apple-software-services",
+      "company": "Apple",
+      "title": "Software and Services",
+      "url": "https://www.apple.com/careers/us/work-at-apple/teams/software-and-services.html",
+      "kind": "Engineering team description, not interview scoring guidance",
+      "checked_on": "2026-10-21",
+      "tracks": [
+        "rails",
+        "system_design"
+      ],
+      "summary": "Apple describes software work around customer needs and user experience. Its team descriptions include scalable and secure services, quality and validation, and privacy and security across product layers.",
+      "application": "For an exercise that already involves user-facing service guarantees or data protection, ask about concrete user impact and relevant failures. Do not invent an Apple interview format, scoring rule, technology requirement, or hiring prediction from this team description."
+    },
+    {
+      "id": "ruby-hash-semantics",
+      "company": "Ruby",
+      "title": "Ruby 4.0 Hash documentation",
+      "url": "https://docs.ruby-lang.org/en/4.0/Hash.html#class-Hash-label-Entry+Order",
+      "kind": "Language reference, not interview advice",
+      "checked_on": "2026-10-21",
+      "tracks": [
+        "ruby"
+      ],
+      "summary": "Ruby Hash preserves entry creation order. Updating an existing value leaves its position unchanged; deleting and recreating an entry moves it to the end. Hash#shift removes the first entry, and Hash#keys follows entry order.",
+      "application": "Check actual Ruby behavior when reviewing ordered-hash code. Delete then reinsert is a valid recency-update idiom; do not demand a linked list or invent a move-to-end API. This does not prove every cache implementation is correct: trace the submitted operations against the brief."
+    }
+  ]
+}

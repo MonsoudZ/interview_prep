@@ -1,6 +1,6 @@
 # Only preserved submission artifacts enter the model context. Never execute source here.
 class ReviewPacket
-  PROMPT_VERSION = "senior-review-v1"
+  PROMPT_VERSION = "senior-review-v8"
   def self.build(session)
     content = PracticeContent.for(session.exercise_version)
     raise Workspace::Invalid, "No review rubric for this version" unless content
@@ -16,6 +16,7 @@ class ReviewPacket
       slug: session.exercise_version.slug, version: session.exercise_version.version, title: session.exercise_version.title,
       track: session.exercise_version.track, brief: session.exercise_version.brief },
       rubric: content.fetch("criteria"), follow_up: content.fetch("follow_up"),
+      reviewer_guidance: ReviewGuidance.for(session.exercise_version.track),
       files: snapshot.files, reference_alternative: reference,
       assistance: PracticeContent.present(session).fetch(:hints), mode: session.mode, practice_focus: session.practice_focus,
       rework: session.revision_of_id && { source_session_id: session.revision_of_id, source_revision: session.revision_context["source_revision"],

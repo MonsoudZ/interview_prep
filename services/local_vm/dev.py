@@ -22,20 +22,25 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=["init", "start"])
     parser.add_argument("--image")
+    parser.add_argument("--review-only", action="store_true", help="Start the app and local reviewer without a Linux execution worker")
     parser.add_argument("--review-model", help="Installed local Ollama model; init stores it, start may override it")
     parser.add_argument("--review-context", type=int, choices=[32768,65536])
+    parser.add_argument("--review-thinking", choices=["on", "off"], help="Reasoning mode for the local reviewer; init stores it, start may override it")
     args = parser.parse_args()
     STATE.mkdir(parents=True, exist_ok=True, mode=0o700)
     if args.mode == "init":
-        if not args.image or not re.fullmatch(r"sha256:[0-9a-f]{64}", args.image):
+        if (not args.image and not args.review_only) or (args.image and not re.fullmatch(r"sha256:[0-9a-f]{64}", args.image)):
             raise ValueError("Supply the actual immutable VM image ID")
         if CONFIG.exists():
             data = json.loads(CONFIG.read_text())
-            data["image"] = args.image
+            if args.image:
+                data["image"] = args.image
             if args.review_model:
                 data["review_model"] = args.review_model
             if args.review_context:
                 data["review_context"] = args.review_context
+            if args.review_thinking:
+                data["review_thinking"] = args.review_thinking == "on"
             data.setdefault("review_bridge_key", secrets.token_hex(32))
             data.setdefault("review_worker_id", str(uuid.uuid4()))
             temporary = CONFIG.with_suffix(".tmp")
@@ -46,13 +51,18 @@ def main():
             data = {"profile": "interview", "image": args.image, "worker_id": str(uuid.uuid4()),
               "bridge_key": secrets.token_hex(32), "signing_key": secrets.token_hex(32),
               "review_bridge_key": secrets.token_hex(32), "review_worker_id": str(uuid.uuid4()),
-              "review_model": args.review_model, "review_context": args.review_context or 32768}
+              "review_model": args.review_model, "review_context": args.review_context or 32768,
+              "review_thinking": args.review_thinking != "off"}
             with os.fdopen(os.open(CONFIG, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w") as stream:
                 json.dump(data, stream)
         print("Private local worker configuration saved (keys not displayed)")
         return
 
     data = json.loads(CONFIG.read_text())
+    if not args.review_only and not data.get("image"):
+        raise ValueError("Configure a Linux worker image or start with --review-only")
+    if args.review_only and not (args.review_model or data.get("review_model")):
+        raise ValueError("Configure an installed local model or supply --review-model")
     # Older local configurations remain usable without silently enabling a model.
     if "review_bridge_key" not in data:
         data["review_bridge_key"] = secrets.token_hex(32)
@@ -70,7 +80,8 @@ def main():
     finally:
         probe.close()
     env = os.environ.copy()
-    env.update(INTERVIEW_WORKER_BRIDGE_KEY=data["bridge_key"], INTERVIEW_WORKER_SIGNING_KEY=data["signing_key"], INTERVIEW_WORKER_IMAGE=data["image"])
+    if not args.review_only:
+        env.update(INTERVIEW_WORKER_BRIDGE_KEY=data["bridge_key"], INTERVIEW_WORKER_SIGNING_KEY=data["signing_key"], INTERVIEW_WORKER_IMAGE=data["image"])
     env["INTERVIEW_REVIEW_BRIDGE_KEY"] = data["review_bridge_key"]
     if data.get("app_secret"):
         env["SECRET_KEY_BASE"] = data["app_secret"]
@@ -103,14 +114,18 @@ def main():
                     time.sleep(0.5)
             else:
                 raise RuntimeError("Rails did not become ready")
-            worker = subprocess.Popen([sys.executable, str(Path(__file__).with_name("bridge.py")),
-              "--worker-id", data["worker_id"], "--profile", data["profile"], "--image", data["image"]], cwd=ROOT, env=env, stdout=log, stderr=log)
-            children.append(worker)
+            if not args.review_only:
+                worker = subprocess.Popen([sys.executable, str(Path(__file__).with_name("bridge.py")),
+                  "--worker-id", data["worker_id"], "--profile", data["profile"], "--image", data["image"]], cwd=ROOT, env=env, stdout=log, stderr=log)
+                children.append(worker)
             model = args.review_model or data.get("review_model")
             if model:
                 review_command = [sys.executable, str(ROOT / "services/review_worker/worker.py"),
                     "--worker-id", data["review_worker_id"], "--model", model,
                     "--context", str(args.review_context or data.get("review_context", 32768))]
+                thinking = data.get("review_thinking", True) if args.review_thinking is None else args.review_thinking == "on"
+                if thinking:
+                    review_command.append("--thinking")
                 try:
                     ready = subprocess.run(review_command + ["--doctor"], env=env, stdout=log, stderr=log, timeout=20).returncode == 0
                 except subprocess.TimeoutExpired:
@@ -119,7 +134,7 @@ def main():
                     optional_children.append(subprocess.Popen(review_command, cwd=ROOT, env=env, stdout=log, stderr=log))
                 else:
                     print("Studio model unavailable; interview practice remains available. Connect Ollama and restart to enable reviews.", flush=True)
-            print("Interview Studio: http://127.0.0.1:3100/ — local Linux VM worker starting", flush=True)
+            print("Interview Studio: http://127.0.0.1:3100/ — " + ("review-only; code execution unavailable" if args.review_only else "local Linux VM worker starting"), flush=True)
             while not stopping:
                 if any(child.poll() is not None for child in children):
                     raise RuntimeError("A development process stopped; inspect the private development log")

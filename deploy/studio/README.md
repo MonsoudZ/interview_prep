@@ -2,7 +2,7 @@
 
 Use the M4 Max Studio as the central app, database, Linux execution worker, and local model host. Open that same app from either computer. A second checkout on the laptop is useful for development; it does not synchronize accounts or practice history.
 
-The setup below has been prepared and tested with simulated model responses. **No model has been installed or benchmarked on your Studio yet.** The existing laptop app and practice data remain usable. No Railway compute or paid inference is provisioned.
+The M4 Max Studio now has `qwen3.5:27b` installed and the app connected in review-only mode. Initial real-model checks are recorded in [verification](VERIFICATION.md); broad review calibration and the Studio's Linux execution worker setup remain outstanding. No Railway compute or paid inference is provisioned.
 
 ## 1. Transfer the code
 
@@ -65,9 +65,18 @@ colima -p interview start
 python3 services/local_vm/dev.py start
 ```
 
-`configure` writes fresh private credentials and a unique cookie name under ignored `.state` storage. It does not start servers or download models. `doctor` checks local prerequisites; the launcher also checks that the configured model is installed and has a recorded digest. An unavailable model leaves practice available with the reviewer marked offline. Start Ollama and restart the launcher to reconnect it.
+`configure` enables the reviewer's reasoning mode by default; pass `--thinking off` for the faster setting, or override one start with `python3 services/local_vm/dev.py start --review-thinking off`. Reasoning mode takes several minutes per review on this hardware; the app keeps a review leased while its worker is heartbeating, up to twenty minutes. `configure` writes fresh private credentials and a unique cookie name under ignored `.state` storage. It does not start servers or download models. `doctor` checks local prerequisites; the launcher also checks that the configured model is installed and has a recorded digest. An unavailable model leaves practice available with the reviewer marked offline. Start Ollama and restart the launcher to reconnect it.
 
 Open `http://127.0.0.1:3100/` on the Studio. Submit an attempt, open its review, and choose **Generate review**. Feedback is requested explicitly and covers the frozen submission. It has its own report; it never fills in or replaces self-assessment ratings.
+
+If the Linux execution worker is not installed yet, start the app and reviewer independently:
+
+```sh
+python3 deploy/studio/manage.py configure --review-only --model qwen3.5:27b --context 32768
+python3 services/local_vm/dev.py start --review-only
+```
+
+This requires the native app dependencies and prepared database from step 2, plus a running Ollama server. System-design practice and reviews of existing submissions are available; sandboxed code execution requires the Linux worker. Later, configure its actual image ID and start without `--review-only`. Reconfiguration preserves existing credentials and any configured image ID.
 
 ## 4. Use the Studio from the laptop
 
@@ -102,6 +111,16 @@ python3 services/local_vm/dev.py start
 Restore refuses to overwrite a destination containing accounts or sessions. Do not copy raw SQLite files while the app is running, or copy the laptop's worker keys. Sign in again on the Studio app; sessions are intentionally specific to its new secret. Keep the laptop backup until the transferred history is checked. After this move, practice through the Studio app so history stays in one place.
 
 ## Review evidence and accuracy
+
+New review packets include relevant, dated summaries of public Google and Amazon preparation/review guidance, Apple engineering context for Rails/design, and Ruby language documentation for Ruby tasks. The [guidance catalog](../../curriculum/reviewer_guidance/README.md) distinguishes interview advice from engineering descriptions and records our local coaching interpretations. Completed reviews disclose their saved sources. This supplies inference context; it does not fine-tune the model or change the exercise rubric. It works in review-only mode without a Linux worker.
+
+Run repeatable local model checks without writing practice history:
+
+```sh
+python3 services/review_worker/evaluate.py --output artifacts/reviewer-evaluation/run-001
+```
+
+Choose a new output directory for each run. See the [evaluation guide](../../services/review_worker/evaluation/README.md) for expected outcomes and the distinction between report validity and semantic accuracy.
 
 The worker supplies the published exercise, senior rubric, submitted source/design files, a reference alternative where available, assistance history, and recent test results from the same revision. Source citations must exist in that frozen submission; cited run IDs must belong to its packet. Invalid reports are rejected, and model name, digest, rubric version, and prompt version are recorded. Inputs are treated as untrusted data; the model has no execution tools. Callback receipts are saved privately and retried without rerunning inference.
 
