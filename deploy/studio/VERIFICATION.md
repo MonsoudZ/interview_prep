@@ -1,5 +1,29 @@
 # Studio integration verification
 
+## Calibration of two recurring evaluator flags — 2026-10-26
+
+Same Studio and model digest (`qwen3.5:27b`, `sha256:2d2e4b8fc7c0…`), prompt `senior-review-v8`, reasoning mode with fall back, `--repeats 2`. Reports are under ignored `artifacts/reviewer-evaluation/lru-nil-wording-001` and `-002`. No practice history was written.
+
+Two flags that recurred across prompt versions were traced to the published text and a fixture expectation rather than to the reviewer; the reasoning is in the evaluator README's "Calibration decisions" section.
+
+- **LRU `boundaries` leak.** The version-1 brief and probe could be read as requiring `get` to let callers distinguish a stored `nil` from an absent key, while the reference returns `nil` in both cases and no test asks for more. Published `ruby/lru-cache` version 2 with an unambiguous brief, `boundaries` target, probe and practice (`ruby-lru-cache-review-v2`); tests, reference and the `ruby.lru-cache.v1` operation are unchanged, so no image rebuild. Version 1 is archived under `versions/1/` and `RailsCurriculum` resolves it for existing sessions; a new integration test covers that path.
+- **Tenant projects `authorization` leak.** The planted scope widening makes a viewer requesting another tenant's ID receive 403 where the brief promises 404, and the `authorization` target includes ownership resolution preceding role checks. That is a consequence of the planted line, so `authorization` is no longer listed as independent for the defect variant (the reference variant still requires all three source criteria at target).
+
+Live check on the LRU pair after the wording change:
+
+| Run | Case | Attempt | Mode used | Seconds | Output tokens | Result |
+| --- | --- | --- | --- | --- | --- | --- |
+| 001 | LRU reference | 1 | reasoning | 262 | 6,343 | clean |
+| 001 | LRU reference | 2 | reasoning | 498 | 6,203 | clean |
+| 001 | LRU defect | 1 | reasoning | 609 | 7,631 | defect found and cited; `boundaries` lowered because the first draft of the version-2 target said a stored `nil` is "refreshed by `get`" |
+| 001 | LRU defect | 2 | reasoning | 490 | 6,015 | same as attempt 1 |
+| 002 | LRU defect | 1 | reasoning | 432 | 5,764 | defect found and cited, no leaked criteria; report rejected by the contract because one citation spanned 27 lines (the cap is 20) |
+| 002 | LRU defect | 2 | reasoning | 527 | 5,156 | clean |
+
+The sentinel demand did not appear in any of the six attempts; every `boundaries` rationale now states that returning `nil` for both cases is the contract. The run-001 defect leak was a correct reading of overlapping criteria that the first draft introduced, so the published `boundaries` target leaves recency refresh to `correctness` explicitly; run 002 is the text that was committed. Four reasoning attempts stayed within budget this time (no fall back), at seven to ten minutes each. Two attempts per case remain a small-sample repeatability observation, not evidence that the leak cannot recur, and the tenant-projects pair was not rerun here.
+
+Also run: `build_packets.rb` (LRU packets now carry exercise version 2), the Rails suite (130 runs, 1,732 assertions, zero failures, four expected opt-in skips), the 18 review-worker Python tests, and `curriculum/ruby/validate.py` (validation report unchanged).
+
 ## Real-model setup — 2026-10-21
 
 Verified on the 64 GB Apple M4 Max Studio with Ollama 0.40.6:

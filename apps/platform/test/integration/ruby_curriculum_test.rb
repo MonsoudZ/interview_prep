@@ -13,7 +13,7 @@ class RubyCurriculumTest < ActionDispatch::IntegrationTest
     get "/api/exercises"
     catalog = response.parsed_body.fetch("exercises")
     entries.each do |entry|
-      exercise = ExerciseVersion.find_by!(slug: entry.fetch("slug"), version: 1)
+      exercise = ExerciseVersion.find_by!(slug: entry.fetch("slug"), version: entry.fetch("version"))
       root = Rails.root.join("../../curriculum/ruby", entry.fetch("slug"))
       visible = exercise.starter_files.fetch("test/visible_test.rb").scan(/^  def test_/).length
       hidden = root.join("hidden_test.rb").read.scan(/^  def test_/).length
@@ -51,5 +51,30 @@ class RubyCurriculumTest < ActionDispatch::IntegrationTest
       assert_response :ok
       assert_equal ["solution.rb"], response.parsed_body.fetch("files").keys
     end
+  end
+  test "a superseded LRU version stays readable from its archived manifest while new sessions get the clarified contract" do
+    current = RailsCurriculum.find("lru-cache", 2)
+    archived = RailsCurriculum.find("lru-cache", 1)
+    assert_equal 2, current.fetch("version")
+    assert_equal current.fetch("operation"), archived.fetch("operation"), "the runner and tests did not change"
+    assert_equal current.fetch("test_count"), archived.fetch("test_count")
+    assert_equal %w[lru-cache], RailsCurriculum.archived.map { |entry| entry.fetch("slug") }
+    assert_nil ExerciseVersion.find_by(slug: "lru-cache", version: 1), "fresh seeds publish only the current version"
+    archive = Rails.root.join("../../curriculum/ruby/lru-cache/versions/1")
+    latest = ExerciseVersion.find_by!(slug: "lru-cache", version: 2)
+    assert_includes latest.brief, "Callers cannot tell a stored `nil` from an absent key through `get`"
+    refute_includes archive.join("BRIEF.md").read, "Callers cannot tell"
+    older = ExerciseVersion.create!(latest.attributes.except("id", "created_at", "updated_at").merge("version" => 1, "brief" => archive.join("BRIEF.md").read))
+    assert_equal "ruby-lru-cache-review-v1", RailsCurriculum.review(older).fetch("version")
+    assert_equal "ruby-lru-cache-review-v2", RailsCurriculum.review(latest).fetch("version")
+    assert_equal "Why must `get` distinguish a stored `nil` from an absent key, and how does your code do that?",
+      RailsCurriculum.review(older).fetch("criteria").find { |c| c["id"] == "boundaries" }.fetch("probe")
+    assert_match(/without a sentinel/, RailsCurriculum.review(latest).fetch("criteria").find { |c| c["id"] == "boundaries" }.fetch("probe"))
+    assert_equal RailsCurriculum.reference(latest), RailsCurriculum.reference(older)
+    assert_equal 12, ExecutionEvidence.expected_tests(older)
+    assert_equal ExerciseCatalog.details(latest).except(:brief), ExerciseCatalog.details(older).except(:brief)
+    get "/api/exercises"
+    listed = response.parsed_body.fetch("exercises").select { |item| item["slug"] == "lru-cache" }
+    assert_equal [2], listed.map { |item| item["version"] }, "new session selection shows only the latest version"
   end
 end

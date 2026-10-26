@@ -1,7 +1,7 @@
 {
   "slug": "lru-cache",
   "track": "ruby",
-  "version": 1,
+  "version": 2,
   "operation": "ruby.lru-cache.v1",
   "test_count": 12,
   "entry_file": "solution.rb",

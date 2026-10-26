@@ -4,7 +4,7 @@ Implement `LruCache` in solution.rb: a cache holding at most `capacity` entries 
 
 ## Contract
 - `LruCache.new(capacity)`: `capacity` is a positive Integer; anything else raises `ArgumentError`.
-- `get(key)`: returns the stored value, or `nil` when absent, and marks the key as most recently used. A stored `nil` is a real entry.
+- `get(key)`: returns the stored value, or `nil` when absent, and marks the key as most recently used. A stored `nil` is a real entry: it occupies capacity, appears in `keys`, and reading it refreshes its recency, but `get` still returns `nil` for it. Callers cannot tell a stored `nil` from an absent key through `get`; that is the published contract, not a gap, and no sentinel or extra method is expected. Only your implementation must tell the two apart, so that a stored `nil` is kept, counted and refreshed, and a missing key inserts nothing.
 - `put(key, value)`: inserts or replaces the value, marks the key as most recently used, then evicts the least recently used entry if the cache now holds more than `capacity` entries. Replacing an existing key never evicts.
 - `size`: the number of stored entries.
 - `keys`: every stored key from least recently used to most recently used.

@@ -1,0 +1,17 @@
+{
+  "slug": "lru-cache",
+  "track": "ruby",
+  "version": 1,
+  "operation": "ruby.lru-cache.v1",
+  "test_count": 12,
+  "entry_file": "solution.rb",
+  "title": "Bounded LRU Cache",
+  "duration_minutes": 30,
+  "summary": "Implement a fixed-capacity least-recently-used cache with constant-time reads and writes, exact eviction order, and an observable recency order.",
+  "skills": [
+    "Data structures",
+    "Hash ordering",
+    "Complexity"
+  ],
+  "difficulty": "Medium \u00b7 data structures"
+}

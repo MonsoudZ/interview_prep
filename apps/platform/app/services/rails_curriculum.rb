@@ -3,16 +3,51 @@
 # per process and deep-frozen; callers must copy before changing anything.
 # Despite the name, this covers every manifest-published exercise; manifests carry a
 # "track" (rails when absent) that selects the curriculum directory.
+#
+# Each slug directory publishes its current version. When published text changes, the
+# superseded manifest, BRIEF.md, review.json and reference/ are archived unchanged under
+# versions/<n>/ so sessions created on that version keep reading their own rubric and
+# reference; only the current manifest is seeded, advertised, and listed by `entries`.
 class RailsCurriculum
   def self.entries(track = nil)
-    @entries ||= deep_freeze(Dir.glob(Rails.root.join("../../curriculum/{rails,ruby}/*/exercise.json")).sort.map { |path|
-      JSON.parse(File.read(path)).tap { |entry| entry["track"] ||= "rails" }
-    })
+    @entries ||= manifests(Dir.glob(curriculum.join("{rails,ruby}/*/exercise.json")))
     track ? @entries.select { |entry| entry.fetch("track") == track } : @entries
   end
 
+  def self.archived
+    @archived ||= manifests(Dir.glob(curriculum.join("{rails,ruby}/*/versions/*/exercise.json"))).each do |entry|
+      path = directory(entry)
+      unless path.join("exercise.json").file? && path.join("BRIEF.md").file? && path.join("review.json").file? && path.join("reference").directory?
+        raise "Archived manifest #{entry.fetch('slug')} v#{entry.fetch('version')} must keep its exercise.json, BRIEF.md, review.json and reference/ under #{path}"
+      end
+    end
+  end
+
   def self.find(slug, version)
-    entries.find { |entry| entry.fetch("slug") == slug && entry.fetch("version") == version }
+    (entries + archived).find { |entry| entry.fetch("slug") == slug && entry.fetch("version") == version }
+  end
+
+  # The directory holding an entry's review.json and reference/.
+  def self.directory(entry)
+    base = curriculum.join(entry.fetch("track"), entry.fetch("slug"))
+    entries.include?(entry) ? base : base.join("versions", entry.fetch("version").to_s)
+  end
+
+  def self.curriculum
+    Rails.root.join("../../curriculum")
+  end
+
+  def self.manifests(paths)
+    deep_freeze(paths.sort.map { |path|
+      JSON.parse(File.read(path)).tap { |entry|
+        entry["track"] ||= "rails"
+        expected = path.include?("/versions/") ? File.basename(File.dirname(File.dirname(File.dirname(path)))) : File.basename(File.dirname(path))
+        raise "Manifest #{path} publishes slug #{entry['slug'].inspect} from directory #{expected}" unless entry["slug"] == expected
+        if path.include?("/versions/") && entry["version"].to_s != File.basename(File.dirname(path))
+          raise "Archived manifest #{path} must sit under versions/#{entry['version']}"
+        end
+      }
+    })
   end
 
   def self.initial_path(exercise)
@@ -32,7 +67,7 @@ class RailsCurriculum
     elsif exercise.slug == "merge-intervals" && exercise.version == 2
       Rails.root.join("../../curriculum/ruby/merge-intervals/reference")
     elsif (entry = find(exercise.slug, exercise.version))
-      Rails.root.join("../../curriculum", entry.fetch("track"), exercise.slug, "reference")
+      directory(entry).join("reference")
     end
     return unless root
     cache(:references, root.to_s) do
@@ -43,7 +78,7 @@ class RailsCurriculum
   def self.review(exercise)
     entry = find(exercise.slug, exercise.version)
     return unless entry
-    cache(:reviews, entry.fetch("slug")) { JSON.parse(File.read(Rails.root.join("../../curriculum", entry.fetch("track"), entry.fetch("slug"), "review.json"))) }
+    cache(:reviews, "#{entry.fetch('slug')}-v#{entry.fetch('version')}") { JSON.parse(File.read(directory(entry).join("review.json"))) }
   end
 
   def self.cache(store, key)
