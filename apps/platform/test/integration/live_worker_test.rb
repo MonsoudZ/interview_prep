@@ -126,7 +126,7 @@ class LiveWorkerTest < ActionDispatch::IntegrationTest
     post "/api/register", params: { name: "Curriculum VM validation", email: "curriculum-live-#{SecureRandom.hex(6)}@example.test", password: SecureRandom.hex(20) }, as: :json
     assert_response :ok
     RailsCurriculum.entries.each do |entry|
-      exercise = ExerciseVersion.find_by!(slug: entry.fetch("slug"), version: 1)
+      exercise = ExerciseVersion.find_by!(slug: entry.fetch("slug"), version: entry.fetch("version"))
       post "/api/sessions", params: { exercise_id: exercise.id, mode: "guided" }, as: :json
       assert_response :created
       session_id, revision = data.values_at("id", "revision")

@@ -47,9 +47,14 @@ rails_broken = rails_reference.sub("Project.where(organization_id: @user.organiz
   "Project.where(organization_id: params[:organization_id].presence || @user.organization_id)")
 raise "Mutation did not apply" if rails_broken == rails_reference
 rails_defect_line = rails_broken.lines.zip(rails_reference.lines).index { |mutated, original| mutated != original } + 1
+# The reference must keep every source criterion at target. In the defect variant only `safe_updates`
+# stays independent: the brief ties `authorization` to the same line ("Resolve ownership before role
+# checks, so a viewer requesting another tenant's ID still receives 404"), and the widened scope makes
+# that viewer receive 403 instead, so lowering `authorization` there is a consequence, not a leak.
 [["reference", rails_reference], ["defect", rails_broken]].each do |variant, source|
   files = starter_files.merge(controller => source)
-  expect = { "source_criteria" => %w[boundary authorization safe_updates], "process_criteria" => %w[debugging],
+  expect = { "source_criteria" => variant == "defect" ? %w[boundary safe_updates] : %w[boundary authorization safe_updates],
+    "process_criteria" => %w[debugging],
     "defect" => variant == "defect" ? { "criterion" => "boundary", "path" => controller, "line" => rails_defect_line } : nil }
   packets << { "case" => "tenant-projects-#{variant}", "expect" => expect, "packet" => {
     "prompt_version" => ReviewPacket::PROMPT_VERSION, "revision" => Digest::SHA256.hexdigest(JSON.generate(files)),

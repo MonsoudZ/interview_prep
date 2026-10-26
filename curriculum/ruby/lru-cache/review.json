@@ -1,5 +1,5 @@
 {
-  "version": "ruby-lru-cache-review-v1",
+  "version": "ruby-lru-cache-review-v2",
   "hints": [
     {
       "title": "1 \u00b7 Name the two operations you need",
@@ -32,9 +32,9 @@
     {
       "id": "boundaries",
       "title": "Capacity one, nil values and odd keys",
-      "target": "Capacity one works; a stored `nil` is an entry; arrays, strings and integers all work as keys.",
-      "probe": "Why must `get` distinguish a stored `nil` from an absent key, and how does your code do that?",
-      "practice": "Add a visible test for a stored `nil` and make it pass without special-casing."
+      "target": "Capacity one works; a stored `nil` stays an entry that occupies capacity and appears in `keys`, and `get` returning `nil` for it exactly as for an absent key is the contract, not a gap; arrays, strings and integers all work as keys. Whether `get` refreshes recency is rated under correctness, not here.",
+      "probe": "`get` returns `nil` both for a stored `nil` and for an absent key, so why must your implementation still tell the two apart internally, and how does your code do that without a sentinel?",
+      "practice": "Add a visible test that a stored `nil` still occupies its slot and is returned as `nil` after later puts, and make it pass without special-casing."
     },
     {
       "id": "verification",
