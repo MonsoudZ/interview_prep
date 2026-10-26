@@ -66,3 +66,14 @@ The initial model candidate is `qwen3.5:27b`. Its selection is provisional until
 - Browser: completed the debugging/design/follow-up sequence, received the new support reference result (12 tests/65 assertions), verified immutable source, saved/reloaded the overall reflection, and downloaded a consolidated review with both source identities and answered/partial/unasked states. A 390px responsive check had no horizontal document overflow. Verification sources/reflection are labeled synthetic; no personal ratings were recorded.
 
 The new app features do not require Ollama. The Studio model installation and semantic reviewer calibration remain outstanding.
+
+## Follow-up answers as process evidence — 2026-10-21
+
+Same Studio and model digest, prompt `senior-review-v9`, reasoning mode, two new evaluator cases that add a completed follow-up round's typed `verification` answer to the LRU reference packet (`follow_up_answers` plus a citable `follow-up/verification.md`). Reports are under ignored `artifacts/reviewer-evaluation/followup-answers-001/`. No practice history was written.
+
+| Case | Seconds | Output tokens | Semantic flags |
+| --- | --- | --- | --- |
+| LRU follow-up correct | 207 | 4,918 | clean: `verification` meets_target citing `follow-up/verification.md` lines 1–4; three source criteria meets_target; no findings |
+| LRU follow-up contradicts | 342 | 8,396 | `verification` needs_development citing lines 1–2 of the answer, with the contradiction of the code and the tests-first claim both stated; `correctness` and `complexity` unchanged; `boundaries` lowered to approaching_target by the same stored-nil sentinel demand already seen in the v7 and v8 runs (`leaked_criteria`) |
+
+The answer evidence worked as intended in both directions: a process criterion that was always `not_observed` is now rated from the cited answer, and a wrong answer did not change the correctness rating of the correct source. The boundaries leak is a pre-existing fast-and-reasoning failure mode unrelated to the follow-up change and remains open.

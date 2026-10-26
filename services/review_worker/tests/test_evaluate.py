@@ -36,6 +36,33 @@ class SemanticCheckTests(unittest.TestCase):
         self.assertEqual(['missing logs'], flagged['unsupported_major_findings'])
         self.assertEqual(['missing logs'], flagged['execution_observations_without_runs'])
 
+class FollowUpAnswerTests(unittest.TestCase):
+    """A process criterion with a typed follow-up answer is expected at target, or below target when the answer is the planted defect."""
+    correct = {'source_criteria': ['correctness', 'complexity'], 'process_criteria': [], 'answered_process_criteria': ['verification'], 'defect': None}
+    contradicts = {**correct, 'defect': {'criterion': 'verification', 'path': 'follow-up/verification.md', 'line': 1}}
+
+    def test_answered_process_criterion_left_not_observed_is_its_own_flag(self):
+        clean = semantic_check(report({'correctness': 'meets_target', 'complexity': 'meets_target', 'verification': 'meets_target'}), self.correct)
+        self.assertTrue(clean['clean'], clean)
+        self.assertEqual([], clean['answered_process_unrated'])
+        unrated = semantic_check(report({'correctness': 'meets_target', 'complexity': 'meets_target', 'verification': 'not_observed'}), self.correct)
+        self.assertEqual(['verification'], unrated['answered_process_unrated']); self.assertFalse(unrated['clean'])
+        lowered = semantic_check(report({'correctness': 'meets_target', 'complexity': 'meets_target', 'verification': 'approaching_target'}), self.correct)
+        self.assertEqual(['verification'], lowered['unsupported_downgrades']); self.assertEqual([], lowered['answered_process_unrated'])
+
+    def test_contradicting_answer_must_be_rated_below_target_and_cited_without_lowering_source(self):
+        cited = {'id': 'verification', 'rating': 'needs_development', 'evidence': [{'path': 'follow-up/verification.md', 'start_line': 1, 'end_line': 2}]}
+        found = semantic_check({'criteria': [cited, {'id': 'correctness', 'rating': 'meets_target', 'evidence': []}, {'id': 'complexity', 'rating': 'meets_target', 'evidence': []}], 'findings': []}, self.contradicts)
+        self.assertTrue(found['clean'], found)
+        missed = semantic_check(report({'correctness': 'approaching_target', 'complexity': 'meets_target', 'verification': 'meets_target'}), self.contradicts)
+        self.assertTrue(missed['missed_defect']); self.assertTrue(missed['defect_uncited']); self.assertEqual(['correctness'], missed['leaked_criteria'])
+        self.assertEqual([], missed['answered_process_unrated'])
+
+    def test_packets_without_answers_keep_the_original_flags(self):
+        expect = {'source_criteria': ['correctness'], 'process_criteria': ['verification'], 'defect': None}
+        result = semantic_check(report({'correctness': 'meets_target', 'verification': 'not_observed'}), expect)
+        self.assertNotIn('answered_process_unrated', result); self.assertTrue(result['clean'])
+
 def attempt(valid=True, **flags):
     semantic = {'missed_defect': False, 'defect_uncited': False, 'leaked_criteria': [], 'process_criteria_rated': [],
                 'execution_observations_without_runs': [], **flags}

@@ -10,7 +10,7 @@ from urllib.request import Request, HTTPRedirectHandler, ProxyHandler, build_ope
 ROOT = Path(__file__).parent
 SCHEMA = json.loads((ROOT / 'report.schema.json').read_text())
 PROMPT = (ROOT / 'prompt.txt').read_text()
-PROMPT_VERSION = 'senior-review-v8'
+PROMPT_VERSION = 'senior-review-v9'
 
 class ReviewError(Exception):
     def __init__(self, code, http_status=None, detail=None):

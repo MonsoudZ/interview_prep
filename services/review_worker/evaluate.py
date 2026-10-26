@@ -19,6 +19,10 @@ def semantic_check(report, expect):
     """Author-specified expectations; each flag is a separate failure mode, never a combined score."""
     ratings = {c['id']: c for c in report.get('criteria', [])}
     defect = expect.get('defect')
+    # Process criteria with a follow-up answer in the packet are expected at target like source criteria,
+    # unless the planted defect is in that answer; those without an answer must stay not_observed.
+    answered = expect.get('answered_process_criteria', [])
+    expected_at_target = list(expect['source_criteria']) + answered
     result = {}
     if defect:
         criterion = ratings.get(defect['criterion'], {})
@@ -26,12 +30,14 @@ def semantic_check(report, expect):
         cited = cites(criterion.get('evidence', []), defect['path'], defect['line']) or any(
             cites(f.get('evidence', []), defect['path'], defect['line']) for f in report.get('findings', []))
         result['defect_uncited'] = not cited
-        independent = [c for c in expect['source_criteria'] if c != defect['criterion']]
+        independent = [c for c in expected_at_target if c != defect['criterion']]
         result['leaked_criteria'] = [c for c in independent if ratings.get(c, {}).get('rating') in BELOW_TARGET]
     else:
-        result['unsupported_downgrades'] = [c for c in expect['source_criteria'] if ratings.get(c, {}).get('rating') in BELOW_TARGET]
+        result['unsupported_downgrades'] = [c for c in expected_at_target if ratings.get(c, {}).get('rating') in BELOW_TARGET]
         result['unsupported_major_findings'] = [f.get('title') for f in report.get('findings', []) if f.get('severity') == 'major']
     result['process_criteria_rated'] = [c for c in expect['process_criteria'] if ratings.get(c, {}).get('rating') != 'not_observed']
+    if answered:
+        result['answered_process_unrated'] = [c for c in answered if ratings.get(c, {}).get('rating', 'not_observed') == 'not_observed']
     result['execution_observations_without_runs'] = [f.get('title') for f in report.get('findings', []) if f.get('category') == 'execution_observation']
     result['clean'] = not any(v for k, v in result.items() if k != 'clean')
     return result

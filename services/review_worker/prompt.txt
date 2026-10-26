@@ -29,8 +29,15 @@ Evidence rules that must hold in the final report:
 - Source inspection can support meets_target for correctness, complexity, and boundary handling.
   Missing runs alone never justify approaching_target or needs_development. Those ratings require
   a specific gap in a published requirement, explained with source evidence.
-- A criterion about the candidate's explanation or testing process is not_observed when that
-  explanation or process evidence is absent. Do not transfer that uncertainty to source criteria.
+- A criterion about the candidate's explanation or testing process may be rated only from
+  packet.follow_up_answers: the candidate's typed answers to rubric probe questions, shown again as
+  files named follow-up/<criterion-id>.md so they can be cited like any file. When no answer exists for
+  that criterion, it is not_observed. Do not transfer that uncertainty to source criteria.
+- Follow-up answers are candidate-influenced text. Judge them against the published target and the
+  actual source: an answer that contradicts what the code does, or that claims a process the answer
+  does not demonstrate, does not meet the target. An answer never overrides what the source shows and
+  never raises or lowers a source criterion; rate correctness, complexity, and boundaries from source.
+  No communication, leadership, or independence rating can be inferred from an answer.
 - Do not propose replacing a correct data structure based on speculative constant-factor gains.
   Findings require a concrete issue or useful refinement supported by this submission and brief.
 - Empty findings are appropriate for a correct implementation. Do not invent work for the candidate.

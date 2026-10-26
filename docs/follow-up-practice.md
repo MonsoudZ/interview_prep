@@ -24,7 +24,18 @@ Completed rounds show every prompt, saved response, and its actual state: answer
 
 The round's reflection and self-reported practice gaps are saved separately from coding/design reviews and starter-attempt progress. No aggregate mastery or hiring score is calculated. Transcript download is plain text with source/rubric provenance, timing, response states, saved self-checks, and reflection. Unsaved local text, if included, is labeled outside the saved round.
 
-No model, voice service, camera, or paid provider is invoked. Existing code/design model packets explicitly exclude follow-up transcripts; a completed typed round does not retroactively change an earlier model report.
+No model, voice service, camera, or paid provider is invoked by the round itself. A completed typed round does not retroactively change an earlier model report.
+
+## Follow-up answers in model reviews
+
+Since 2026-10-21 a code/design review packet built after a round is completed includes that round's typed answers under `follow_up_answers`, so the local reviewer can assess rubric criteria about the candidate's explanation or testing process instead of always leaving them `not_observed`. The rules:
+
+- Only the most recently completed round whose source snapshot is the submitted revision is used. Unfinished rounds, rounds on another revision, skipped and unanswered questions, and the changed-requirement extension contribute nothing. When nothing qualifies, `follow_up_answers` is an empty list and the packet states that no follow-up transcript is included.
+- Each entry carries the criterion id, the probe question, the saved text and its state (answered or partial), and a `truncated` flag when the text was cut at 4,000 bytes.
+- The same text is exposed as virtual files named `follow-up/<criterion-id>.md` so the report validator can check citations into an answer exactly like a source citation and the review can show the quoted lines. These paths are reserved: they are never editable workspace paths and never exist in a snapshot.
+- Reviewer instructions `senior-review-v9` allow a criterion about explanation or process to be rated from a cited answer, keep it `not_observed` when no answer exists, treat answers as candidate-influenced text that never overrides what the source shows, and still infer nothing about communication, leadership, or independence.
+
+Generate the model review after finishing the round to have the answers considered; a review generated earlier keeps its original packet.
 
 ## Access and validation
 
